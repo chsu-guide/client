@@ -67,14 +67,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         centerTitle: true,
       ),
 
-      body: Container(
-        alignment: AlignmentDirectional.topStart,
-        child: <Widget> [
-          SchedulePage(),
-          Center(child: Text("Under Construction!!"),),
-        ][currentPageIndex],
-
-      ),
+      body: <Widget>[
+          const SchedulePage(),
+          const Center(child: Text("Under Construction!")),
+      ][currentPageIndex],
 
       bottomNavigationBar: NavigationBar(
         backgroundColor: Theme.of(context).colorScheme.onPrimary,

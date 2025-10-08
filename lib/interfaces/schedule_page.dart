@@ -42,84 +42,87 @@ class _SchedulePageState extends State<SchedulePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget> [
-                SingleChoice(),
-                SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  items: getFirstFieldOptions(selectedTarget)
-                  .map((option) => DropdownMenuItem(
-                      value: option,
-                      child: Text(option),
-                    ))
-                  .toList(),
-                  initialValue: groups[0],
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter some text';
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget> [
+                  SingleChoice(),
+                  SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    items: getFirstFieldOptions(selectedTarget)
+                    .map((option) => DropdownMenuItem(
+                        value: option,
+                        child: Text(option),
+                      ))
+                    .toList(),
+                    initialValue: groups[0],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter some text';
                       }
                       return null;
-                  },
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: "Группа"
+                    },
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: "Группа"
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedFirstField = value!;
+                      });
+                    },
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedFirstField = value!;
-                    });
-                  },
-                ),
-                SizedBox(height: 16),
-                TextFormField(
-                  readOnly: true,
-                  initialValue: selectedDay.toLocal().toString().split(' ')[0],
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: "Диапазон"
+                  SizedBox(height: 16),
+                  TextFormField(
+                    readOnly: true,
+                    initialValue: selectedDay.toLocal().toString().split(' ')[0],
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: "Диапазон"
+                    ),
+                    onTap: () {
+                      showDateRangePicker(
+                        context: context,
+                        initialDateRange: DateTimeRange(
+                          start: DateTime.now(),
+                          end: DateTime.now()
+                        ),
+                        firstDate: DateTime(2025),
+                        lastDate: DateTime(2026),
+                        helpText: 'Выберите диапазон дат',
+                        saveText: 'Установить',
+                        locale: const Locale('ru', 'RU'),
+                      ).then((value) {
+                        if (value != null) {
+                          setState(() {
+                            selectedDay = value.start;
+                          });
+                        }
+                      });
+                    },
                   ),
-                  onTap: () {
-                    showDateRangePicker(
-                      context: context,
-                      initialDateRange: DateTimeRange(
-                        start: DateTime.now(),
-                        end: DateTime.now()
-                      ),
-                      firstDate: DateTime(2025),
-                      lastDate: DateTime(2026),
-                      helpText: 'Выберите диапазон дат',
-                      saveText: 'Установить',
-                      locale: const Locale('ru', 'RU'),
-                    ).then((value) {
-                      if (value != null) {
-                        setState(() {
-                          selectedDay = value.start;
-                        });
+                  SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_formKey.currentState?.validate() ?? false) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Получаю расписание...')),
+                        );
                       }
-                    });
-                  },
-                ),
-                SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState?.validate() ?? false) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Получаю расписание...')),
-                      );
-                    }
-                  },
-                  child: const Text('Показать'),
-                ),
-              ],
-            )
-          ),
-        ],
+                    },
+                    child: const Text('Показать'),
+                  ),
+                ],
+              )
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -142,15 +145,22 @@ class _SingleChoiceState extends State<SingleChoice> {
       showSelectedIcon: false,
       segments: const [
         ButtonSegment<ScheduleTarget>(
-          value: ScheduleTarget.student,label: Text("Студент")
+          value: ScheduleTarget.student,
+          label: Text("Студент")
         ),
         ButtonSegment<ScheduleTarget>(
-          value: ScheduleTarget.tutor, label: Text("Преподаватель")
+          value: ScheduleTarget.tutor,
+          label: Text("Преподаватель", overflow: TextOverflow.ellipsis)
         ),
         ButtonSegment<ScheduleTarget>(
-          value: ScheduleTarget.auditorium, label: Text("Аудитория")
+          value: ScheduleTarget.auditorium,
+          label: Text("Аудитория")
         ),
       ],
+      style: const ButtonStyle(
+       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+       visualDensity: VisualDensity(horizontal: -3, vertical: -1)
+      ),
       selected: <ScheduleTarget>{selectedTarget},
       onSelectionChanged: (Set<ScheduleTarget> newSelection) {
         setState(() {
