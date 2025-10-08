@@ -1,0 +1,162 @@
+import 'package:flutter/material.dart';
+
+enum ScheduleTarget {
+  student,
+  tutor,
+  auditorium
+}
+
+class SchedulePage extends StatefulWidget {
+  const SchedulePage({super.key});
+
+  @override
+  State<SchedulePage> createState() => _SchedulePageState();
+}
+
+class _SchedulePageState extends State<SchedulePage> {
+  final _formKey = GlobalKey<FormState>();
+  ScheduleTarget selectedTarget = ScheduleTarget.student;
+  String selectedFirstField = "";
+  DateTime selectedDay = DateTime.now();
+
+  List<String> groups = ["1ПИб-02-1оп-22", "1ПИб-02-2оп-22", "1ПИб-02-3оп-22"];
+  List<String> tutors = ["Пышницкий Константин Михайлович", "Селяничев Олег Леонидович"];
+  List<String> auditoriums = ["201","202","203","204","205"];
+
+  List<String> getFirstFieldOptions(ScheduleTarget selectedTarget) {
+    switch (selectedTarget) {
+      case ScheduleTarget.tutor:
+        return tutors;
+      case ScheduleTarget.auditorium:
+        return auditoriums;
+      case ScheduleTarget.student:
+        return groups;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget> [
+                SingleChoice(),
+                SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  items: getFirstFieldOptions(selectedTarget)
+                  .map((option) => DropdownMenuItem(
+                      value: option,
+                      child: Text(option),
+                    ))
+                  .toList(),
+                  initialValue: groups[0],
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter some text';
+                      }
+                      return null;
+                  },
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: "Группа"
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedFirstField = value!;
+                    });
+                  },
+                ),
+                SizedBox(height: 16),
+                TextFormField(
+                  readOnly: true,
+                  initialValue: selectedDay.toLocal().toString().split(' ')[0],
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: "Диапазон"
+                  ),
+                  onTap: () {
+                    showDateRangePicker(
+                      context: context,
+                      initialDateRange: DateTimeRange(
+                        start: DateTime.now(),
+                        end: DateTime.now()
+                      ),
+                      firstDate: DateTime(2025),
+                      lastDate: DateTime(2026),
+                      helpText: 'Выберите диапазон дат',
+                      saveText: 'Установить',
+                      locale: const Locale('ru', 'RU'),
+                    ).then((value) {
+                      if (value != null) {
+                        setState(() {
+                          selectedDay = value.start;
+                        });
+                      }
+                    });
+                  },
+                ),
+                SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState?.validate() ?? false) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Получаю расписание...')),
+                      );
+                    }
+                  },
+                  child: const Text('Показать'),
+                ),
+              ],
+            )
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class SingleChoice extends StatefulWidget {
+  const SingleChoice({super.key});
+
+  @override
+  State<StatefulWidget> createState() => _SingleChoiceState();
+}
+
+// фу, сразу к ScheduleTarget привязано - а если такие кнопки ещё где-нибкдь понадобятся??
+class _SingleChoiceState extends State<SingleChoice> {
+  ScheduleTarget selectedTarget = ScheduleTarget.student;
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<ScheduleTarget> (
+      showSelectedIcon: false,
+      segments: const [
+        ButtonSegment<ScheduleTarget>(
+          value: ScheduleTarget.student,label: Text("Студент")
+        ),
+        ButtonSegment<ScheduleTarget>(
+          value: ScheduleTarget.tutor, label: Text("Преподаватель")
+        ),
+        ButtonSegment<ScheduleTarget>(
+          value: ScheduleTarget.auditorium, label: Text("Аудитория")
+        ),
+      ],
+      selected: <ScheduleTarget>{selectedTarget},
+      onSelectionChanged: (Set<ScheduleTarget> newSelection) {
+        setState(() {
+          selectedTarget = newSelection.first;
+        });
+      },
+    );
+  }
+}
