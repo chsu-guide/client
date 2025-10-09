@@ -138,6 +138,7 @@ class _SchedulePageState extends State<SchedulePage> {
                           rangeSelectionMode: _rangeSelectionMode,
                           rangeStartDay: _rangeStart,
                           rangeEndDay: _rangeEnd,
+                          availableGestures: AvailableGestures.horizontalSwipe,
                           
                           selectedDayPredicate: (day) {
                             return isSameDay(_selectedDay, day);
