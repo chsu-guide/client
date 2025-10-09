@@ -43,6 +43,17 @@ class _SchedulePageState extends State<SchedulePage> {
     }
   }
 
+  String? getInitialValue(ScheduleTarget selectedTarget) {
+    switch (selectedTarget) {
+      case ScheduleTarget.tutor:
+        return tutors.first;
+      case ScheduleTarget.auditorium:
+        return auditoriums.first;
+      case ScheduleTarget.student:
+        return groups.first;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -61,10 +72,33 @@ class _SchedulePageState extends State<SchedulePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget> [
-                  SingleChoice(),
-
-                  SizedBox(height: 16),
-
+                  SegmentedButton<ScheduleTarget> (
+                    showSelectedIcon: false,
+                    segments: const [
+                      ButtonSegment<ScheduleTarget>(
+                        value: ScheduleTarget.student,
+                        label: Text("Студент", overflow: TextOverflow.ellipsis),
+                      ),
+                      ButtonSegment<ScheduleTarget>(
+                        value: ScheduleTarget.tutor,
+                        label: Text("Преподаватель", overflow: TextOverflow.ellipsis),
+                      ),
+                      ButtonSegment<ScheduleTarget>(
+                        value: ScheduleTarget.auditorium,
+                        label: Text("Аудитория", overflow: TextOverflow.ellipsis),
+                      ),
+                    ],
+                    style: const ButtonStyle(
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity(horizontal: -3, vertical: -1)
+                    ),
+                    selected: <ScheduleTarget>{selectedTarget},
+                    onSelectionChanged: (Set<ScheduleTarget> newSelection) {
+                      setState(() {
+                        selectedTarget = newSelection.first;
+                      });
+                    },
+                  ),
                   DropdownButtonFormField<String>(
                     items: getFirstFieldOptions(selectedTarget)
                     .map((option) => DropdownMenuItem(
@@ -72,7 +106,7 @@ class _SchedulePageState extends State<SchedulePage> {
                         child: Text(option),
                       ))
                     .toList(),
-                    initialValue: groups[0],
+                    initialValue: getInitialValue(selectedTarget),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter some text';
@@ -129,52 +163,19 @@ class _SchedulePageState extends State<SchedulePage> {
                     },
                     onFormatChanged: (format) {
                     if (_calendarFormat != format) {
-                        // Call `setState()` when updating calendar format
                         setState(() {
                           _calendarFormat = format;
                         });
                       }
                     },
                     onPageChanged: (focusedDay) {
-                      // No need to call `setState()` here
                       _focusedDay = focusedDay;
                     },
                   ),
 
-                  SizedBox(height: 16),
+                  SizedBox(height: 10),
 
-                  /*TextFormField(
-                    readOnly: true,
-                    initialValue: selectedDay.toLocal().toString().split(' ')[0],
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: "Дата"
-                    ),
-                    onTap: () {
-                      showDateRangePicker(
-                        context: context,
-                        initialDateRange: DateTimeRange(
-                          start: DateTime.now(),
-                          end: DateTime.now()
-                        ),
-                        firstDate: DateTime(2025),
-                        lastDate: DateTime(2026),
-                        helpText: 'Выберите дату',
-                        saveText: 'Установить',
-                        locale: const Locale('ru', 'RU'),
-                      ).then((value) {
-                        if (value != null) {
-                          setState(() {
-                            selectedDay = value.start;
-                          });
-                        }
-                      });
-                    },
-                  ),*/
-
-                  SizedBox(height: 16),
-
-                  ElevatedButton(
+                  FilledButton(
                     onPressed: () {
                       if (_formKey.currentState?.validate() ?? false) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -193,48 +194,3 @@ class _SchedulePageState extends State<SchedulePage> {
     );
   }
 }
-
-class SingleChoice extends StatefulWidget {
-  const SingleChoice({super.key});
-
-  @override
-  State<StatefulWidget> createState() => _SingleChoiceState();
-}
-
-// фу, сразу к ScheduleTarget привязано - а если такие кнопки ещё где-нибкдь понадобятся??
-class _SingleChoiceState extends State<SingleChoice> {
-  ScheduleTarget selectedTarget = ScheduleTarget.student;
-
-  @override
-  Widget build(BuildContext context) {
-    return SegmentedButton<ScheduleTarget> (
-      showSelectedIcon: false,
-      segments: const [
-        ButtonSegment<ScheduleTarget>(
-          value: ScheduleTarget.student,
-          label: Text("Студент")
-        ),
-        ButtonSegment<ScheduleTarget>(
-          value: ScheduleTarget.tutor,
-          label: Text("Преподаватель", overflow: TextOverflow.ellipsis)
-        ),
-        ButtonSegment<ScheduleTarget>(
-          value: ScheduleTarget.auditorium,
-          label: Text("Аудитория")
-        ),
-      ],
-      style: const ButtonStyle(
-       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-       visualDensity: VisualDensity(horizontal: -3, vertical: -1)
-      ),
-      selected: <ScheduleTarget>{selectedTarget},
-      onSelectionChanged: (Set<ScheduleTarget> newSelection) {
-        setState(() {
-          selectedTarget = newSelection.first;
-        });
-      },
-    );
-  }
-}
-
-//ascfasfaf
