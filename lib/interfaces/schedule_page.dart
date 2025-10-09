@@ -17,7 +17,6 @@ class SchedulePage extends StatefulWidget {
 class _SchedulePageState extends State<SchedulePage> {
   final _formKey = GlobalKey<FormState>();
   ScheduleTarget selectedTarget = ScheduleTarget.student;
-  String selectedFirstField = "";
 
   DateTime? _selectedDay;
   DateTime _focusedDay = DateTime.now();
@@ -30,9 +29,9 @@ class _SchedulePageState extends State<SchedulePage> {
 
   List<String> groups = ["1ПИб-02-1оп-22", "1ПИб-02-2оп-22", "1ПИб-02-3оп-22"];
   List<String> tutors = ["Пышницкий Константин Михайлович", "Селяничев Олег Леонидович"];
-  List<String> auditoriums = ["201","202","203","204","205"];
+  List<String> auditoriums = ["201 (Советский, 8)", "202 (Советский, 8)", "203 (Советский, 8)", "204 (Советский, 8)", "205 (Советский, 8)"];
 
-  List<String> getFirstFieldOptions(ScheduleTarget selectedTarget) {
+  List<String> getOptionsForInputField(ScheduleTarget selectedTarget) {
     switch (selectedTarget) {
       case ScheduleTarget.tutor:
         return tutors;
@@ -40,17 +39,6 @@ class _SchedulePageState extends State<SchedulePage> {
         return auditoriums;
       case ScheduleTarget.student:
         return groups;
-    }
-  }
-
-  String? getInitialValue(ScheduleTarget selectedTarget) {
-    switch (selectedTarget) {
-      case ScheduleTarget.tutor:
-        return tutors.first;
-      case ScheduleTarget.auditorium:
-        return auditoriums.first;
-      case ScheduleTarget.student:
-        return groups.first;
     }
   }
 
@@ -70,6 +58,7 @@ class _SchedulePageState extends State<SchedulePage> {
             Form(
               key: _formKey,
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget> [
                   SegmentedButton<ScheduleTarget> (
@@ -99,31 +88,36 @@ class _SchedulePageState extends State<SchedulePage> {
                       });
                     },
                   ),
-                  DropdownButtonFormField<String>(
-                    items: getFirstFieldOptions(selectedTarget)
-                    .map((option) => DropdownMenuItem(
-                        value: option,
-                        child: Text(option),
-                      ))
-                    .toList(),
-                    initialValue: getInitialValue(selectedTarget),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter some text';
+
+                  SizedBox(height: 16),
+
+                  Autocomplete<String>(
+                    optionsBuilder: (TextEditingValue textEditingValue) {
+                      if (textEditingValue.text == '') {
+                        return const Iterable<String>.empty();
                       }
-                      return null;
-                    },
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: "Группа"
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedFirstField = value!;
+                      return getOptionsForInputField(selectedTarget).where((String option) {
+                        return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
                       });
                     },
+                    fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+                      return TextFormField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        onEditingComplete: onEditingComplete,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder()
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Это поле не может быть пустым';
+                          }
+                          return null;
+                        },
+                      );
+                    },
                   ),
-
+                  
                   SizedBox(height: 16),
 
                   TableCalendar(
