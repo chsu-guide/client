@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 enum ScheduleTarget {
   student,
@@ -17,7 +18,15 @@ class _SchedulePageState extends State<SchedulePage> {
   final _formKey = GlobalKey<FormState>();
   ScheduleTarget selectedTarget = ScheduleTarget.student;
   String selectedFirstField = "";
-  DateTime selectedDay = DateTime.now();
+
+  DateTime? _selectedDay;
+  DateTime _focusedDay = DateTime.now();
+  RangeSelectionMode _rangeSelectionMode = RangeSelectionMode
+      .toggledOn;
+  DateTime? _rangeStart;
+  DateTime? _rangeEnd;
+
+  CalendarFormat _calendarFormat = CalendarFormat.month;
 
   List<String> groups = ["1ПИб-02-1оп-22", "1ПИб-02-2оп-22", "1ПИб-02-3оп-22"];
   List<String> tutors = ["Пышницкий Константин Михайлович", "Селяничев Олег Леонидович"];
@@ -53,7 +62,9 @@ class _SchedulePageState extends State<SchedulePage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget> [
                   SingleChoice(),
+
                   SizedBox(height: 16),
+
                   DropdownButtonFormField<String>(
                     items: getFirstFieldOptions(selectedTarget)
                     .map((option) => DropdownMenuItem(
@@ -78,8 +89,61 @@ class _SchedulePageState extends State<SchedulePage> {
                       });
                     },
                   ),
+
                   SizedBox(height: 16),
-                  TextFormField(
+
+                  TableCalendar(
+                    firstDay: DateTime.utc(2010, 10, 16),
+                    lastDay: DateTime.utc(2030, 3, 14),
+                    focusedDay: _focusedDay,
+                    locale: "ru-RU",
+                    calendarFormat: _calendarFormat,
+                    startingDayOfWeek: StartingDayOfWeek.monday,
+                    headerStyle: HeaderStyle( formatButtonVisible : false,),
+                    rangeSelectionMode: _rangeSelectionMode,
+                    rangeStartDay: _rangeStart,
+                    rangeEndDay: _rangeEnd,
+                    
+                    selectedDayPredicate: (day) {
+                      return isSameDay(_selectedDay, day);
+                    },
+                    onDaySelected: (selectedDay, focusedDay) {
+                      if (!isSameDay(_selectedDay, selectedDay)) {
+                        setState(() {
+                          _selectedDay = selectedDay;
+                          _focusedDay = focusedDay;
+                          _rangeStart = null; // Important to clean those
+                          _rangeEnd = null;
+                          _rangeSelectionMode = RangeSelectionMode.toggledOff;
+                        });
+                      }
+                    },
+                    onRangeSelected: (start, end, focusedDay) {
+                      setState(() {
+                        _selectedDay = null;
+                        _focusedDay = focusedDay;
+                        _rangeStart = start;
+                        _rangeEnd = end;
+                        _rangeSelectionMode = RangeSelectionMode.toggledOn;
+                      });
+                    },
+                    onFormatChanged: (format) {
+                    if (_calendarFormat != format) {
+                        // Call `setState()` when updating calendar format
+                        setState(() {
+                          _calendarFormat = format;
+                        });
+                      }
+                    },
+                    onPageChanged: (focusedDay) {
+                      // No need to call `setState()` here
+                      _focusedDay = focusedDay;
+                    },
+                  ),
+
+                  SizedBox(height: 16),
+
+                  /*TextFormField(
                     readOnly: true,
                     initialValue: selectedDay.toLocal().toString().split(' ')[0],
                     decoration: const InputDecoration(
@@ -106,8 +170,10 @@ class _SchedulePageState extends State<SchedulePage> {
                         }
                       });
                     },
-                  ),
+                  ),*/
+
                   SizedBox(height: 16),
+
                   ElevatedButton(
                     onPressed: () {
                       if (_formKey.currentState?.validate() ?? false) {
