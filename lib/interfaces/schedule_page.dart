@@ -84,7 +84,7 @@ class _SchedulePageState extends State<SchedulePage> {
                     initialValue: selectedDay.toLocal().toString().split(' ')[0],
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      labelText: "Диапазон"
+                      labelText: "Дата"
                     ),
                     onTap: () {
                       showDateRangePicker(
@@ -95,7 +95,7 @@ class _SchedulePageState extends State<SchedulePage> {
                         ),
                         firstDate: DateTime(2025),
                         lastDate: DateTime(2026),
-                        helpText: 'Выберите диапазон дат',
+                        helpText: 'Выберите дату',
                         saveText: 'Установить',
                         locale: const Locale('ru', 'RU'),
                       ).then((value) {
