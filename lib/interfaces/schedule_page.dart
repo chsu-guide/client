@@ -140,7 +140,11 @@ class _SchedulePageState extends State<SchedulePage> {
                         sixWeekMonthsEnforced: true,
                         calendarFormat: _calendarFormat,
                         startingDayOfWeek: StartingDayOfWeek.monday,
-                        headerStyle: const HeaderStyle(formatButtonVisible: false),
+                        headerStyle: const HeaderStyle(
+                                  formatButtonVisible: false,
+                                  titleCentered: true,
+                                  
+                              ),
                         rangeSelectionMode: _rangeSelectionMode,
                         rangeStartDay: _rangeStart,
                         rangeEndDay: _rangeEnd,
