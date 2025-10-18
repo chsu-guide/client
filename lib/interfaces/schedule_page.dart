@@ -154,11 +154,11 @@ class _SchedulePageState extends State<SchedulePage> {
                           //rangeHighlightColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
                           rangeStartDecoration: BoxDecoration(
                             color: Colors.blue, //Theme.of(context).colorScheme.primary,
-                            shape: BoxShape.rectangle,
+                            shape: BoxShape.circle,
                           ),
                           rangeEndDecoration: BoxDecoration(
                             color: Colors.blue, //Theme.of(context).colorScheme.primary,
-                            shape: BoxShape.rectangle,
+                            shape: BoxShape.circle,
                           ),
                         ),
                         
