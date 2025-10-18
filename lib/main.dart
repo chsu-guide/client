@@ -36,9 +36,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   int currentPageIndex = 0;
-  static const _kFontFam = 'ChsuLogo';
-  static const String? _kFontPkg = null;
-  static const IconData chsuLogo = IconData(0xe800, fontFamily: _kFontFam, fontPackage: _kFontPkg);
 
   final List<NavigationDestination> mainPagesNav = <NavigationDestination>[
             NavigationDestination(
@@ -61,12 +58,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.onPrimary,
-        title: const Icon(chsuLogo, color: Color(0xFFEF3841)),
-        centerTitle: true,
-      ),
-
       body: <Widget>[
           const SchedulePage(),
           const Center(child: Text("Under Construction!")),
