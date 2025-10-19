@@ -1,78 +1,77 @@
-import 'package:chsu_schedule_app/interfaces/schedule_page.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:chsu_schedule_app/interfaces/schedule_page.dart';
+import 'package:chsu_schedule_app/interfaces/settings_page.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const ChsuApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class ChsuApp extends StatelessWidget {
+  static const Color chsuMainColor = Color(0xFFEF3841);
+
+  const ChsuApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Расписание ЧГУ',
-      theme: ThemeData(colorSchemeSeed: const Color(0xFFEF3841)),
-      home: const MyHomePage(),
-      localizationsDelegates: [
-         GlobalMaterialLocalizations.delegate
-       ],
-       supportedLocales: [
-         const Locale('en'),
-         const Locale('ru'),
-       ],
       debugShowCheckedModeBanner: false,
+      title: 'Расписание ЧГУ',
+      theme: ThemeData(colorSchemeSeed: chsuMainColor, useMaterial3: true),
+      home: const NavigationPage(),
+      localizationsDelegates: [GlobalMaterialLocalizations.delegate],
+      supportedLocales: const [
+        //Locale('en'),
+        Locale('ru'),
+      ],
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+class NavigationPage extends StatefulWidget {
+  const NavigationPage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<NavigationPage> createState() => _NavigationPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
-  int currentPageIndex = 0;
+class _NavigationPageState extends State<NavigationPage> {
+  final List<BottomNavigationBarItem> _navBarItems = const [
+    BottomNavigationBarItem(
+      label: "Расписание",
+      icon: Icon(Icons.calendar_today_outlined),
+    ),
+    BottomNavigationBarItem(
+      label: "Карта",
+      icon: Icon(Icons.location_on_outlined),
+    ),
+    //BottomNavigationBarItem(label: "Настройки", icon: Icon(Icons.settings_outlined)),
+  ];
+  final List<Widget> _navPages = const [
+    SchedulePage(),
+    Center(child: Text("Under Construction!")),
+    SettingsPage(),
+  ];
+  int _currentPageIndex = 0;
 
-  final List<NavigationDestination> mainPagesNav = <NavigationDestination>[
-            NavigationDestination(
-              label: "Расписание",
-              selectedIcon: Icon(Icons.calendar_today),
-              icon: Icon(Icons.calendar_today_outlined),
-            ),
-            NavigationDestination(
-                label: "Карта",
-                selectedIcon: Icon(Icons.location_on),
-                icon: Icon(Icons.location_on_outlined),
-            ),
-          ];
+  void _bottomBarNavigation(int index) => setState(() {
+    _currentPageIndex = index;
+  });
 
   @override
-  void initState() {
-    super.initState();
-  }
+  void initState() => super.initState();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: <Widget>[
-          const SchedulePage(),
-          const Center(child: Text("Under Construction!")),
-      ][currentPageIndex],
+      body: SafeArea(child: _navPages[_currentPageIndex]),
 
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Theme.of(context).colorScheme.onPrimary,
-        surfaceTintColor: Theme.of(context).colorScheme.onPrimary,
-        onDestinationSelected: (int index) {
-          setState(() {
-            currentPageIndex = index;
-          });
-        },
-        selectedIndex: currentPageIndex,
-        destinations: mainPagesNav,
+        currentIndex: _currentPageIndex,
+        type: BottomNavigationBarType.fixed,
+        items: _navBarItems,
+        onTap: _bottomBarNavigation,
       ),
     );
   }
