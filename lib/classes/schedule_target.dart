@@ -1,0 +1,1 @@
+enum ScheduleTarget { student, tutor, auditorium }

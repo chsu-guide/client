@@ -2,11 +2,11 @@ import 'package:chsu_schedule_app/main.dart';
 import 'package:chsu_schedule_app/widgets/schedule_card.dart';
 import 'package:flutter/material.dart';
 
-class ScheduleDayView extends StatelessWidget {
+class ScheduleQueryView extends StatelessWidget {
   final String _title;
   final List<ScheduleCard>? _dayCards;
 
-  const ScheduleDayView({
+  const ScheduleQueryView({
     super.key,
     required String title,
     List<ScheduleCard>? cards,

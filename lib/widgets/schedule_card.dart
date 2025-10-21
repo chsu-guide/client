@@ -45,7 +45,7 @@ class ScheduleCard extends StatelessWidget {
               SizedBox(height: 5),
               Text(
                 _subjectName,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, overflow: TextOverflow.clip),
               ),
               SizedBox(height: 5),
               Row(
@@ -60,14 +60,14 @@ class ScheduleCard extends StatelessWidget {
                 children: [
                   Icon(Icons.person_sharp),
                   SizedBox(width: 5),
-                  Text(_tutorName, style: TextStyle(fontSize: 14)),
+                  Text(_tutorName, style: TextStyle(fontSize: 14, overflow: TextOverflow.clip)),
                 ],
               ),
               Row(
                 children: [
                   Icon(Icons.location_on_sharp),
                   SizedBox(width: 5),
-                  Text(_location, style: TextStyle(fontSize: 14)),
+                  Text(_location, style: TextStyle(fontSize: 14, overflow: TextOverflow.clip)),
                 ],
               ),
             ],
