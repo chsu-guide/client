@@ -33,6 +33,10 @@ class _SchedulePageState extends State<SchedulePage> {
 
   CalendarFormat _calendarFormat = CalendarFormat.month;
 
+  // Добавляем переменную для отслеживания валидности формы
+  bool _isFormValid = false;
+  bool _isDateSelected = false; 
+
   final List<String> _groups = [
     "1ПИб-02-1оп-22",
     "1ПИб-02-2оп-22",
@@ -123,6 +127,20 @@ class _SchedulePageState extends State<SchedulePage> {
     super.initState();
   }
 
+  // Метод для валидации формы и обновления состояния
+  void _validateForm() {
+    setState(() {
+      _isFormValid = _formKey.currentState?.validate() ?? false;
+    });
+  }
+
+  void _checkDateSelected() {
+    setState(() {
+      // Проверяем, выбрана ли одиночная дата ИЛИ выбран диапазон дат
+      _isDateSelected = (_selectedDay != null) || (_rangeStart != null && _rangeEnd != null);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -135,21 +153,26 @@ class _SchedulePageState extends State<SchedulePage> {
             child: Form(
               key: _formKey,
               child: Column(
+                spacing: 8,
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   ScheduleTargetSelector(
                     selectedTarget: _selectedTarget,
-                    onSelectionChanged: (newTarget) => setState(() => _selectedTarget = newTarget)
+                    onSelectionChanged: (newTarget) {
+                      setState(() => _selectedTarget = newTarget);
+                      _validateForm(); // Вызываем валидацию при смене цели
+                    }
                   ),
                   
-                  SizedBox(height: 20),
+                  SizedBox(height: 8),
                   
                   ScheduleSearchField(
                     selectedTarget: _selectedTarget,
                     groups: _groups,
                     tutors: _tutors,
                     auditoriums: _auditoriums,
+                    onValidationChanged: _validateForm, // Передаем callback
                   ),
                   
                   ScheduleDatePicker(
@@ -161,25 +184,27 @@ class _SchedulePageState extends State<SchedulePage> {
                     calendarFormat: _calendarFormat,
                     
                     onDaySelected: (selectedDay, focusedDay) {
-                      if (!isSameDay(selectedDay, selectedDay)) {
+                      if (!isSameDay(_selectedDay, selectedDay)) {
                         setState(() {
+                          _rangeSelectionMode = RangeSelectionMode.toggledOff;
                           _selectedDay = selectedDay;
                           _focusedDay = focusedDay;
-                          _rangeStart = null;
+                          _rangeStart = null; // Очищаем диапазон, если выбрана одна дата
                           _rangeEnd = null;
-                          _rangeSelectionMode = RangeSelectionMode.toggledOff;
                         });
+                        _checkDateSelected(); // Вызываем проверку даты
                       }
                     },
 
                     onRangeSelected: (start, end, focusedDay) {
                       setState(() {
-                        _selectedDay = null;
+                        _rangeSelectionMode = RangeSelectionMode.toggledOn;
+                        _selectedDay = start; // Очищаем одиночную дату, если выбран диапазон
                         _focusedDay = focusedDay;
                         _rangeStart = start;
                         _rangeEnd = end;
-                        _rangeSelectionMode = RangeSelectionMode.toggledOn;
                       });
+                      _checkDateSelected(); // Вызываем проверку даты
                     },
                     
                     onFormatChanged: (format) {
@@ -195,15 +220,13 @@ class _SchedulePageState extends State<SchedulePage> {
                     },
                   ),
 
-                  SizedBox(height: 10),
+                  //SizedBox(height: 10),
 
                   FilledButton(
                     style: FilledButton.styleFrom(alignment: Alignment.center),
                     child: const Text('Показать'),
-                    onPressed: () {
-                      if (_formKey.currentState?.validate() ?? false) {
-                      }
-                    },
+                    onPressed: (_isFormValid && _isDateSelected) ? () {
+                    } : null,
                   )
                 ],
               ),

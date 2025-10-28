@@ -6,6 +6,7 @@ class ScheduleSearchField extends StatelessWidget {
   final List<String> groups;
   final List<String> tutors;
   final List<String> auditoriums;
+  final VoidCallback onValidationChanged; // Добавляем callback
   
   List<String> get _options {
     switch (selectedTarget) {
@@ -24,6 +25,7 @@ class ScheduleSearchField extends StatelessWidget {
     required this.groups,
     required this.tutors,
     required this.auditoriums,
+    required this.onValidationChanged, // Делаем обязательным
   });
 
   String? _validator(String? value) {
@@ -31,11 +33,12 @@ class ScheduleSearchField extends StatelessWidget {
     
     switch (selectedTarget) {
       case ScheduleTarget.student:
-        return validation ? (groups.contains(value) ? null : "Группа не найдена") : "Введите номер группы";
+        
+        return validation ? (groups.contains(value) ? null : "") : "";
       case ScheduleTarget.tutor:
-        return validation ? (tutors.contains(value) ? null : "Преподаватель не найден") : "Введите ФИО преподавателя";
+        return validation ? (tutors.contains(value) ? null : "") : "";
       case ScheduleTarget.auditorium:
-        return validation ? (auditoriums.contains(value) ? null : "Аудитория не найдена") : "Введите номер аудитории";
+        return validation ? (auditoriums.contains(value) ? null : "") : "";
     }
   }
 
@@ -50,6 +53,9 @@ class ScheduleSearchField extends StatelessWidget {
           (String option) => option.toLowerCase().contains(textEditingValue.text.toLowerCase())
         );
       },
+      onSelected: (String selection) {
+        onValidationChanged();
+      },
       
       fieldViewBuilder: (context, controller, focusNode, onEditingComplete)
       {
@@ -57,11 +63,15 @@ class ScheduleSearchField extends StatelessWidget {
           controller: controller,
           focusNode: focusNode,
           onEditingComplete: onEditingComplete,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          onChanged: (text) {
+            onValidationChanged(); // Вызываем callback для обновления состояния родителя
+          },
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
-            helperText: " ",
             ),
           validator: _validator,
+          
         );
       },
     );
