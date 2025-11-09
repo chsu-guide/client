@@ -6,7 +6,7 @@ class ScheduleSearchField extends StatelessWidget {
   final List<String> groups;
   final List<String> tutors;
   final List<String> auditoriums;
-  final VoidCallback onValidationChanged; // Добавляем callback
+  final ValueChanged<bool> onValidationChanged; // Изменяем тип callback
   
   List<String> get _options {
     switch (selectedTarget) {
@@ -25,20 +25,19 @@ class ScheduleSearchField extends StatelessWidget {
     required this.groups,
     required this.tutors,
     required this.auditoriums,
-    required this.onValidationChanged, // Делаем обязательным
+    required this.onValidationChanged,
   });
 
-  String? _validator(String? value) {
-    final validation = value?.isNotEmpty ?? false;
+  bool _isValidInput(String value) {
+    if (value.isEmpty) return false;
     
     switch (selectedTarget) {
       case ScheduleTarget.student:
-        
-        return validation ? (groups.contains(value) ? null : "") : "";
+        return groups.contains(value);
       case ScheduleTarget.tutor:
-        return validation ? (tutors.contains(value) ? null : "") : "";
+        return tutors.contains(value);
       case ScheduleTarget.auditorium:
-        return validation ? (auditoriums.contains(value) ? null : "") : "";
+        return auditoriums.contains(value);
     }
   }
 
@@ -54,24 +53,22 @@ class ScheduleSearchField extends StatelessWidget {
         );
       },
       onSelected: (String selection) {
-        onValidationChanged();
+        onValidationChanged(true); // Выбранный элемент всегда валиден
       },
       
-      fieldViewBuilder: (context, controller, focusNode, onEditingComplete)
-      {
-        return TextFormField(
+      fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+        return TextField(
           controller: controller,
           focusNode: focusNode,
           onEditingComplete: onEditingComplete,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
           onChanged: (text) {
-            onValidationChanged(); // Вызываем callback для обновления состояния родителя
+            // Проверяем валидность при каждом изменении текста
+            final isValid = _isValidInput(text);
+            onValidationChanged(isValid);
           },
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
-            ),
-          validator: _validator,
-          
+          ),
         );
       },
     );

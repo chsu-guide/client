@@ -1,5 +1,3 @@
-
-
 import 'package:chsu_schedule_app/classes/schedule_target.dart';
 import 'package:chsu_schedule_app/widgets/schedule_card.dart';
 import 'package:chsu_schedule_app/widgets/schedule_date_picker.dart';
@@ -19,7 +17,6 @@ class SchedulePage extends StatefulWidget {
 }
 
 class _SchedulePageState extends State<SchedulePage> {
-  final _formKey = GlobalKey<FormState>();
   final ScrollController _scrollController = ScrollController();
 
   ScheduleTarget _selectedTarget = ScheduleTarget.student;
@@ -33,8 +30,8 @@ class _SchedulePageState extends State<SchedulePage> {
 
   CalendarFormat _calendarFormat = CalendarFormat.month;
 
-  // Добавляем переменную для отслеживания валидности формы
-  bool _isFormValid = false;
+  // Добавляем переменные для отслеживания валидности
+  bool _isSearchFieldValid = false;
   bool _isDateSelected = false; 
 
   final List<String> _groups = [
@@ -127,10 +124,10 @@ class _SchedulePageState extends State<SchedulePage> {
     super.initState();
   }
 
-  // Метод для валидации формы и обновления состояния
-  void _validateForm() {
+  // Метод для обновления состояния валидности поля поиска
+  void _updateSearchFieldValidation(bool isValid) {
     setState(() {
-      _isFormValid = _formKey.currentState?.validate() ?? false;
+      _isSearchFieldValid = isValid;
     });
   }
 
@@ -150,86 +147,83 @@ class _SchedulePageState extends State<SchedulePage> {
           backgroundColor: Theme.of(context).colorScheme.onPrimary,
           formWidget: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                spacing: 8,
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  ScheduleTargetSelector(
-                    selectedTarget: _selectedTarget,
-                    onSelectionChanged: (newTarget) {
-                      setState(() => _selectedTarget = newTarget);
-                      _validateForm(); // Вызываем валидацию при смене цели
-                    }
-                  ),
+            child: Column(
+              spacing: 8,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                ScheduleTargetSelector(
+                  selectedTarget: _selectedTarget,
+                  onSelectionChanged: (newTarget) {
+                    setState(() => _selectedTarget = newTarget);
+                    // Сбрасываем валидность при смене цели
+                    _updateSearchFieldValidation(false);
+                  }
+                ),
+                
+                SizedBox(height: 8),
+                
+                ScheduleSearchField(
+                  selectedTarget: _selectedTarget,
+                  groups: _groups,
+                  tutors: _tutors,
+                  auditoriums: _auditoriums,
+                  onValidationChanged: _updateSearchFieldValidation,
+                ),
+                
+                ScheduleDatePicker(
+                  focusedDay: _focusedDay,
+                  selectedDay: _selectedDay,
+                  rangeStart: _rangeStart,
+                  rangeEnd: _rangeEnd,
+                  rangeSelectionMode: _rangeSelectionMode,
+                  calendarFormat: _calendarFormat,
                   
-                  SizedBox(height: 8),
-                  
-                  ScheduleSearchField(
-                    selectedTarget: _selectedTarget,
-                    groups: _groups,
-                    tutors: _tutors,
-                    auditoriums: _auditoriums,
-                    onValidationChanged: _validateForm, // Передаем callback
-                  ),
-                  
-                  ScheduleDatePicker(
-                    focusedDay: _focusedDay,
-                    selectedDay: _selectedDay,
-                    rangeStart: _rangeStart,
-                    rangeEnd: _rangeEnd,
-                    rangeSelectionMode: _rangeSelectionMode,
-                    calendarFormat: _calendarFormat,
-                    
-                    onDaySelected: (selectedDay, focusedDay) {
-                      if (!isSameDay(_selectedDay, selectedDay)) {
-                        setState(() {
-                          _rangeSelectionMode = RangeSelectionMode.toggledOff;
-                          _selectedDay = selectedDay;
-                          _focusedDay = focusedDay;
-                          _rangeStart = null; // Очищаем диапазон, если выбрана одна дата
-                          _rangeEnd = null;
-                        });
-                        _checkDateSelected(); // Вызываем проверку даты
-                      }
-                    },
-
-                    onRangeSelected: (start, end, focusedDay) {
+                  onDaySelected: (selectedDay, focusedDay) {
+                    if (!isSameDay(_selectedDay, selectedDay)) {
                       setState(() {
-                        _rangeSelectionMode = RangeSelectionMode.toggledOn;
-                        _selectedDay = start; // Очищаем одиночную дату, если выбран диапазон
+                        _rangeSelectionMode = RangeSelectionMode.toggledOff;
+                        _selectedDay = selectedDay;
                         _focusedDay = focusedDay;
-                        _rangeStart = start;
-                        _rangeEnd = end;
+                        _rangeStart = null;
+                        _rangeEnd = null;
                       });
                       _checkDateSelected(); // Вызываем проверку даты
-                    },
-                    
-                    onFormatChanged: (format) {
-                      if (_calendarFormat != format) {
-                        setState(() {
-                          _calendarFormat = format;
-                        });
-                      }
-                    },
-                    
-                    onPageChanged: (focusedDay) {
+                    }
+                  },
+
+                  onRangeSelected: (start, end, focusedDay) {
+                    setState(() {
+                      _rangeSelectionMode = RangeSelectionMode.toggledOn;
+                      _selectedDay = start;
                       _focusedDay = focusedDay;
-                    },
-                  ),
+                      _rangeStart = start;
+                      _rangeEnd = end;
+                    });
+                    _checkDateSelected(); // Вызываем проверку даты
+                  },
+                  
+                  onFormatChanged: (format) {
+                    if (_calendarFormat != format) {
+                      setState(() {
+                        _calendarFormat = format;
+                      });
+                    }
+                  },
+                  
+                  onPageChanged: (focusedDay) {
+                    _focusedDay = focusedDay;
+                  },
+                ),
 
-                  //SizedBox(height: 10),
-
-                  FilledButton(
-                    style: FilledButton.styleFrom(alignment: Alignment.center),
-                    child: const Text('Показать'),
-                    onPressed: (_isFormValid && _isDateSelected) ? () {
-                    } : null,
-                  )
-                ],
-              ),
+                FilledButton(
+                  style: FilledButton.styleFrom(alignment: Alignment.center),
+                  child: const Text('Показать'),
+                  onPressed: (_isSearchFieldValid && _isDateSelected) ? () {
+                    // Действие при нажатии
+                  } : null,
+                )
+              ],
             ),
           ),
         ),
