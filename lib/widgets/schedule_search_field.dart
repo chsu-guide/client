@@ -53,7 +53,8 @@ class ScheduleSearchField extends StatelessWidget {
         );
       },
       onSelected: (String selection) {
-        onValidationChanged(true);
+
+        onValidationChanged(true); // Выбранный элемент всегда валиден
       },
       
       fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
