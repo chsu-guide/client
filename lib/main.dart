@@ -1,5 +1,7 @@
+import 'package:chsu_schedule_app/network/chsu_service.dart';
+
+import '../pages/schedule_page.dart';
 import 'package:flutter/material.dart';
-import 'package:chsu_schedule_app/interfaces/schedule_page.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
@@ -8,6 +10,11 @@ void main() {
 
 class ChsuApp extends StatelessWidget {
   static const Color chsuMainColor = Color(0xFFEF3841);
+  static final ThemeData appTheme = ThemeData(
+    colorSchemeSeed: chsuMainColor,
+    useMaterial3: true,
+    brightness: Brightness.light
+  );
 
   const ChsuApp({super.key});
 
@@ -16,13 +23,9 @@ class ChsuApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Расписание ЧГУ',
-      theme: ThemeData(colorSchemeSeed: chsuMainColor, useMaterial3: true),
+      theme: appTheme,
       home: const NavigationPage(),
       localizationsDelegates: [GlobalMaterialLocalizations.delegate],
-      supportedLocales: const [
-        Locale('en'),
-        Locale('ru'),
-      ],
     );
   }
 }

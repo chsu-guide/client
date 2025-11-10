@@ -31,7 +31,7 @@ class ScheduleCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12.0),
       clipBehavior: Clip.hardEdge,
       child: InkWell(
-        splashColor: Colors.black.withAlpha(30),
+        splashColor: Colors.black.withAlpha(20),
         onTap: () => {},
         child: Padding(
           padding: EdgeInsets.all(10),
