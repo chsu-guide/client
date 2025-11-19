@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart';
 
 import 'package:chsu_schedule_app/network/chsu_service.dart';
 import 'package:chsu_schedule_app/network/api_utils.dart';
@@ -16,7 +15,6 @@ import '../widgets/schedule_target_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:table_calendar/table_calendar.dart';
-
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({super.key});
@@ -35,7 +33,7 @@ class _SchedulePageState extends State<SchedulePage> {
   RangeSelectionMode _rangeSelectionMode = RangeSelectionMode.toggledOn;
   DateTime? _rangeStart;
   DateTime? _rangeEnd;
-  final DateFormat _dateFormat = DateFormat("E, dd.MM.yyyy");
+  final DateFormat _dateFormat = DateFormat("EEEE, dd.MM.yyyy", "ru");
 
   CalendarFormat _calendarFormat = CalendarFormat.month;
 
@@ -43,48 +41,21 @@ class _SchedulePageState extends State<SchedulePage> {
   bool _isSearchFieldValid = false;
   bool _isDateSelected = false; 
 
-  final List<String> _groups = [
-    "1ПИб-02-1оп-22",
-  ];
-  final List<String> _tutors = [
-    "Пышницкий Константин Михайлович"
-  ];
-  List<String> _auditoriums = [
-    "201 (Советский, 8)"
-  ];
-  final List<ScheduleCard> _scheduleItems = [
-      /* ScheduleCard(
-        timeSlot: "08:30 — 10:00",
-        subjectName: "(пример для студ) Java-программирование",
-        tutors: {"Пышницкий Константин Михайлович"},
-        lessonType: "лекция",
-        location: "Советский, 8",
-        cabinet: "205",
-        studentGroups: {"1ПИб-02-1оп-22", "1ПИб-02-2оп-22", "1ПИб-02-3оп-22"},
-      ), */
-      ScheduleCard(
-        timeSlot: "08:30 — 10:00",
-        subjectName: "(пример для препод) Мобильное программирование",
-        //tutors: {"Селяничев Олег Леонидович"},
-        lessonType: "лабораторная работа",
-        location: "Советский, 8",
-        cabinet: "205",
-        studentGroups: {"1ПИб-02-3оп-22"},
-      ),
-      ScheduleCard(
-        timeSlot: "08:30 — 10:00",
-        subjectName: "(пример для ауд) Мобильное программирование",
-        tutors: {"Селяничев Олег Леонидович"},
-        lessonType: "лабораторная работа",
-        //location: "Советский, 8",
-        //cabinet: "205",
-        studentGroups: {"1ПИб-02-3оп-22"},
-      )
-    ];
+  // Добавляем переменную для хранения значения поиска
+  String _searchValue = '';
+
+  List<String> _groups = [];
+  List<String> _tutors = [];
+  List<String> _auditoriums = [];
+
+  List<ScheduleCard> _scheduleItems = [];
 
   @override
   void initState() {
     super.initState();
+    _loadAuditoriums();
+    _loadGroups();
+    _loadTutors();
   }
 
   // Метод для обновления состояния валидности поля поиска
@@ -94,12 +65,241 @@ class _SchedulePageState extends State<SchedulePage> {
     });
   }
 
+  // Метод для обновления значения поиска
+  void _updateSearchValue(String value) {
+    setState(() {
+      _searchValue = value;
+    });
+  }
+
   void _checkDateSelected() {
     setState(() {
       // Проверяем, выбрана ли одиночная дата ИЛИ выбран диапазон дат
       _isDateSelected = (_selectedDay != null) || (_rangeStart != null && _rangeEnd != null);
     });
   }
+
+  Future<void> _loadGroups() async {
+      List<String> groups = await getGroups();
+      setState(() {
+        _groups = groups;
+      });
+    }
+
+  Future<List<String>> getGroups() async{
+    try {
+      var token_attempt = await ChsuService.authenticate();
+      var token = unwrapResponse<DataModelString>(token_attempt);
+
+      var client = HttpClient();
+      var req = await client.get("api.chsu.ru", 80, "/api/group/v1");
+      req.headers.add("Authorization", "Bearer ${token.data}");
+      var unwrapped = await req.close();
+      var stringData = await unwrapped.transform(utf8.decoder).join();
+
+      //debugPrint(stringData);
+
+      // Парсим JSON
+      List<dynamic> data = jsonDecode(stringData);
+      // Преобразуем каждый элемент в строку (title)
+      List<String> groups = data.map<String>((item) => item['title'] as String).toList();
+      return groups;
+    } catch (e) {
+      // В случае ошибки возвращаем пустой список или обрабатываем ошибку как-то иначе
+      debugPrint('Error: $e');
+      return [];
+    }
+  }
+
+  Future<void> _loadAuditoriums() async {
+  List<String> auditoriums = await getAuditoriums();
+  setState(() {
+    _auditoriums = auditoriums;
+  });
+}
+
+Future<List<String>> getAuditoriums() async {
+  try {
+    var token_attempt = await ChsuService.authenticate();
+    var token = unwrapResponse<DataModelString>(token_attempt);
+
+    var client = HttpClient();
+    var req = await client.get("api.chsu.ru", 80, "/api/auditorium/v1"); // Изменил endpoint на комнаты
+    req.headers.add("Authorization", "Bearer ${token.data}");
+    var unwrapped = await req.close();
+    var stringData = await unwrapped.transform(utf8.decoder).join();
+
+    //debugPrint(stringData);
+
+    // Парсим JSON
+    List<dynamic> data = jsonDecode(stringData);
+    
+    // Фильтруем аудитории по buildName и преобразуем в номера
+    List<String> classrooms = data
+        .where((item) => item['buildName'] == "Учебно-лабораторный корпус № 1 (Советский, 8)")
+        .map<String>((item) => item['number'] as String)
+        .toList();
+    
+    return classrooms;
+  } catch (e) {
+    // В случае ошибки возвращаем пустой список
+    debugPrint('Error: $e');
+    return [];
+  }
+}
+Future<void> _loadTutors() async {
+  List<String> tutors = await getTutors();
+  setState(() {
+    _tutors = tutors;
+  });
+}
+
+Future<List<String>> getTutors() async {
+  try {
+    var token_attempt = await ChsuService.authenticate();
+    var token = unwrapResponse<DataModelString>(token_attempt);
+
+    var client = HttpClient();
+    var req = await client.get("api.chsu.ru", 80, "/api/teacher/v1"); // Endpoint для преподавателей
+    req.headers.add("Authorization", "Bearer ${token.data}");
+    var unwrapped = await req.close();
+    var stringData = await unwrapped.transform(utf8.decoder).join();
+
+    //debugPrint(stringData);
+
+    // Парсим JSON
+    List<dynamic> data = jsonDecode(stringData);
+    
+    // Преобразуем каждый элемент в ФИО (поле fio)
+    List<String> teachers = data
+        .map<String>((item) => item['fio'] as String)
+        .toList();
+    
+    return teachers;
+  } catch (e) {
+    // В случае ошибки возвращаем пустой список
+    debugPrint('Error: $e');
+    return [];
+  }
+}
+
+Future<void> _loadSchedule() async {
+  String startDate = _formatDate(_rangeStart ?? _selectedDay ?? DateTime.now());
+  String endDate = _formatDate(_rangeEnd ?? _selectedDay ?? DateTime.now());
+  
+  // Используем _searchValue вместо жестко заданной группы
+  List<ScheduleCard> scheduleItems = await getSchedule(startDate, endDate, _searchValue);
+  setState(() {
+    _scheduleItems = scheduleItems;
+  });
+}
+
+Future<List<ScheduleCard>> getSchedule(String startDate, String endDate, String searchValue) async {
+  try {
+    var token_attempt = await ChsuService.authenticate();
+    var token = unwrapResponse<DataModelString>(token_attempt);
+
+    var client = HttpClient();
+    
+    // Добавляем параметры дат в endpoint
+    var url = "/api/timetable/v1/event/from/$startDate/to/$endDate";
+    var req = await client.get("api.chsu.ru", 80, url);
+    req.headers.add("Authorization", "Bearer ${token.data}");
+    var unwrapped = await req.close();
+    var stringData = await unwrapped.transform(utf8.decoder).join();
+
+    //debugPrint(stringData);
+
+    // Парсим JSON
+    List<dynamic> data = jsonDecode(stringData);
+    
+    // Фильтруем занятия в зависимости от выбранной цели
+    List<ScheduleCard> schedule = data
+        .where((item) {
+          switch (_selectedTarget) {
+            case ScheduleTarget.student:
+              // Фильтр по группе
+              if (item['groups'] != null) {
+                for (var group in item['groups']) {
+                  if ((group['title'] as String).toLowerCase() == searchValue.toLowerCase()) {
+                    return true;
+                  }
+                }
+              }
+              return false;
+              
+            case ScheduleTarget.tutor:
+              // Фильтр по преподавателю
+              if (item['lecturers'] != null) {
+                for (var lecturer in item['lecturers']) {
+                  if ((lecturer['fio'] as String).toLowerCase() == searchValue.toLowerCase()) {
+                    return true;
+                  }
+                }
+              }
+              return false;
+              
+            case ScheduleTarget.auditorium:
+              // Фильтр по аудитории
+              if (item['auditory'] != null) {
+                return (item['auditory']['title'] as String).toLowerCase() == searchValue.toLowerCase();
+              }
+              return false;
+          }
+        })
+        .map<ScheduleCard>((item) {
+          // Формируем timeSlot из startTime и endTime
+          String timeSlot = '${item['startTime']} - ${item['endTime']}';
+          
+          // Получаем название дисциплины
+          String subjectName = item['discipline']['title'];
+          
+          // Получаем тип занятия
+          String lessonType = item['lessontype'];
+          
+          // Получаем преподавателей (множество ФИО)
+          Set<String> tutors = {};
+          if (item['lecturers'] != null) {
+            for (var lecturer in item['lecturers']) {
+              tutors.add(lecturer['fio'] as String);
+            }
+          }
+          
+          // Получаем группы (множество названий)
+          Set<String> studentGroups = {};
+          if (item['groups'] != null) {
+            for (var group in item['groups']) {
+              studentGroups.add(group['title'] as String);
+            }
+          }
+          
+          // Получаем кабинет
+          String? cabinet = item['auditory']['title'];
+          
+          // Получаем местоположение
+          String? location = item['build']['title'];
+          return ScheduleCard(
+            timeSlot: timeSlot,
+            subjectName: subjectName,
+            lessonType: lessonType,
+            tutors: tutors.isNotEmpty ? tutors : null,
+            studentGroups: studentGroups.isNotEmpty ? studentGroups : null,
+            cabinet: cabinet,
+            location: location,
+          );
+        }).toList();
+    
+    return schedule;
+  } catch (e) {
+    // В случае ошибки возвращаем пустой список
+    debugPrint('Error: $e');
+    return [];
+  }
+}
+
+String _formatDate(DateTime date) {
+  return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+}
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +320,9 @@ class _SchedulePageState extends State<SchedulePage> {
                   onSelectionChanged: (newTarget) {
                     setState(() => _selectedTarget = newTarget);
                     // Сбрасываем валидность при смене цели
-                  _updateSearchFieldValidation(false);
+                    _updateSearchFieldValidation(false);
+                    // Сбрасываем значение поиска
+                    _updateSearchValue('');
                   }
                 ),
                 
@@ -132,6 +334,7 @@ class _SchedulePageState extends State<SchedulePage> {
                   tutors: _tutors,
                   auditoriums: _auditoriums,
                   onValidationChanged: _updateSearchFieldValidation,
+                  onValueChanged: _updateSearchValue, // Передаем callback для значения
                 ),
                 
                 ScheduleDatePicker(
@@ -185,35 +388,9 @@ class _SchedulePageState extends State<SchedulePage> {
                   style: FilledButton.styleFrom(alignment: Alignment.center),
                   onPressed: (_isSearchFieldValid && _isDateSelected) ? () async {
                     try {
-                      var token_attempt = await ChsuService.authenticate();
-                      var token = unwrapResponse<DataModelString>(token_attempt);
-                      debugPrint(token.data);
-
-                      var client = HttpClient();
-                      var req = await client.get("api.chsu.ru", 80, "/api/auditorium/v1");
-                      req.headers.add("Authorization", "Bearer ${token.data}");
-                      var unwrapped = await req.close();
-                      var stringData = await unwrapped.transform(utf8.decoder).join();
-
-                      debugPrint(stringData);
-
-                      /*
-                      ChsuService.setChopperClientToken()
-
-                      final response = await ChsuService.service.apiAuditoriumV1Get();
-                      final List<AuditoriumModel> list = unwrapResponse<List<AuditoriumModel>>(response);
-                      setState(() {
-                        var a = list.whereType<AuditoriumModel>().map((a) {
-                          final num = a.number ?? a.name ?? '';
-                          final build = (a.buildName != null && a.buildName!.isNotEmpty) ? ' (${a.buildName})' : '';
-                          return '$num $build';
-                        }).toList();
-                        _auditoriums = a;
-                        debugPrint(a.toString());
-                      });
-                      */
+                      await _loadSchedule();
                     } catch (e) {
-                      debugPrint('Ошибка загрузки аудиторий: $e');
+                      debugPrint('Ошибка загрузки расписания: $e');
                     }
                   } : null,
                   child: const Text('Показать')

@@ -1,23 +1,13 @@
 import 'package:chsu_schedule_app/classes/schedule_target.dart';
 import 'package:flutter/material.dart';
 
-class ScheduleSearchField extends StatelessWidget {
+class ScheduleSearchField extends StatefulWidget {
   final ScheduleTarget selectedTarget;
   final List<String> groups;
   final List<String> tutors;
   final List<String> auditoriums;
   final ValueChanged<bool> onValidationChanged;
-  
-  List<String> get _options {
-    switch (selectedTarget) {
-      case ScheduleTarget.tutor:
-        return tutors;
-      case ScheduleTarget.auditorium:
-        return auditoriums;
-      case ScheduleTarget.student:
-        return groups;
-    }
-  }
+  final ValueChanged<String> onValueChanged;
 
   const ScheduleSearchField({
     super.key,
@@ -26,19 +16,55 @@ class ScheduleSearchField extends StatelessWidget {
     required this.tutors,
     required this.auditoriums,
     required this.onValidationChanged,
+    required this.onValueChanged,
   });
+
+  @override
+  State<ScheduleSearchField> createState() => _ScheduleSearchFieldState();
+}
+
+class _ScheduleSearchFieldState extends State<ScheduleSearchField> {
+  String _currentValue = '';
+
+  List<String> get _options {
+    switch (widget.selectedTarget) {
+      case ScheduleTarget.tutor:
+        return widget.tutors;
+      case ScheduleTarget.auditorium:
+        return widget.auditoriums;
+      case ScheduleTarget.student:
+        return widget.groups;
+    }
+  }
 
   bool _isValidInput(String value) {
     if (value.isEmpty) return false;
     
-    switch (selectedTarget) {
+    switch (widget.selectedTarget) {
       case ScheduleTarget.student:
-        return groups.contains(value);
+        return widget.groups.contains(value);
       case ScheduleTarget.tutor:
-        return tutors.contains(value);
+        return widget.tutors.contains(value);
       case ScheduleTarget.auditorium:
-        return auditoriums.contains(value);
+        return widget.auditoriums.contains(value);
     }
+  }
+
+  void _handleTextChanged(String text) {
+    setState(() {
+      _currentValue = text;
+    });
+    widget.onValueChanged(text);
+    final isValid = _isValidInput(text);
+    widget.onValidationChanged(isValid);
+  }
+
+  void _handleSuggestionSelected(String selection) {
+    setState(() {
+      _currentValue = selection;
+    });
+    widget.onValueChanged(selection);
+    widget.onValidationChanged(true);
   }
 
   @override
@@ -52,21 +78,15 @@ class ScheduleSearchField extends StatelessWidget {
           (String option) => option.toLowerCase().contains(textEditingValue.text.toLowerCase())
         );
       },
-      onSelected: (String selection) {
-
-        onValidationChanged(true); // Выбранный элемент всегда валиден
-      },
+      onSelected: _handleSuggestionSelected,
       
       fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+        // Используем контроллер от Autocomplete, но отслеживаем изменения
         return TextField(
           controller: controller,
           focusNode: focusNode,
           onEditingComplete: onEditingComplete,
-          onChanged: (text) {
-            // Проверяем валидность при каждом изменении текста
-            final isValid = _isValidInput(text);
-            onValidationChanged(isValid);
-          },
+          onChanged: _handleTextChanged,
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
           ),

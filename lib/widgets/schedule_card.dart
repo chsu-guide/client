@@ -9,19 +9,7 @@ class ScheduleCard extends StatelessWidget {
   final Set<String>? _studentGroups;
   final String? _cabinet;
   final String? _location;
-  final bool _customTileExpanded = false;
 
-  ///
-  /// (Чтобы не отображался список групп или преподов, передайте пустое множество)
-  /// - timeSlot:       начало и конец занятия
-  /// - subjectName:    название дисциплины
-  /// - pg:             номер подгруппы
-  /// - tutors:         список преподавателей
-  /// - studentGroups:  список групп
-  /// - lessonType:     тип занятия (лекционное, лабораторная, экзамен и пр.)
-  /// - cabinet:        номер аудитории
-  /// - location:       адрес местопровождения занятия
-  /// 
   const ScheduleCard({
     super.key,
     required String timeSlot,
@@ -41,23 +29,38 @@ class ScheduleCard extends StatelessWidget {
        _location = location,
        _cabinet = cabinet;
 
-  Widget _createList(Set<String>? list) {
-    if (list == null) {
-      return Text("");
-    } else
-    if (list.length == 1)
-    {
-      return Text(list.first, style: TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis));
+  Widget _createList(Set<String>? list, BuildContext context) {
+    if (list == null || list.isEmpty) {
+      return const SizedBox.shrink();
+    } else if (list.length == 1) {
+      return Text(
+        list.first, 
+        style: const TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis),
+      );
     } else {
-      return ExpansionTile(
-        title: Text(list.first, style: TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis)),
-        trailing: Icon(_customTileExpanded ? Icons.arrow_drop_down_circle : Icons.arrow_drop_down),
-        //onExpansionChanged: (bool expanded) {
-        //  setState(() => _customTileExpanded = expanded);
-        //},
-        children: _tutors!.map((item) {
-          return ListTile(title: Text(list.first, style: TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis)));
-        }).toList()
+      // Используем StatefulBuilder для управления состоянием расширения
+      return StatefulBuilder(
+        builder: (context, setState) {
+          bool isExpanded = false;
+          return Container(
+            width: double.infinity, // Ограничиваем ширину
+            child: ExpansionTile(
+              title: Text(
+                '${list.first} и ещё ${list.length - 1}',
+                style: const TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis),
+              ),
+              trailing: Icon(isExpanded ? Icons.arrow_drop_up : Icons.arrow_drop_down),
+              onExpansionChanged: (bool expanded) {
+                setState(() => isExpanded = expanded);
+              },
+              children: list.map((item) {
+                return ListTile(
+                  title: Text(item, style: const TextStyle(fontSize: 12)),
+                );
+              }).toList(),
+            ),
+          );
+        },
       );
     }
   }
@@ -71,77 +74,95 @@ class ScheduleCard extends StatelessWidget {
         splashColor: Colors.black.withAlpha(20),
         onTap: () => {},
         child: Padding(
-          padding: EdgeInsets.all(10),
+          padding: const EdgeInsets.all(10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // время
               Text(
                 _timeSlot,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
-              SizedBox(height: 5),
+              const SizedBox(height: 5),
 
               // название
               Text(
                 _subjectName,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, overflow: TextOverflow.ellipsis),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold, 
+                  fontSize: 16, 
+                  overflow: TextOverflow.ellipsis
+                ),
               ),
-              SizedBox(height: 5),
+              const SizedBox(height: 5),
 
               // тип и пг
               Row(
                 children: [
-                  Text(_lessonType, style: TextStyle(fontSize: 12)),
-                  SizedBox(width: 10),
-                  Text(_pg == null ? "" : "пг-$_pg", style: TextStyle(fontSize: 12)),
+                  Text(_lessonType, style: const TextStyle(fontSize: 12)),
+                  const SizedBox(width: 10),
+                  Text(_pg == null ? "" : "пг-$_pg", style: const TextStyle(fontSize: 12)),
                 ],
               ),
-              SizedBox(height: 7),
+              const SizedBox(height: 7),
 
               // преподаватели
-              Visibility(
-                visible: _tutors != null && _tutors.isNotEmpty ? true : false ,
-                child: Row(
+              if (_tutors != null && _tutors!.isNotEmpty) ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.person_sharp),
-                    SizedBox(width: 5),
-                    _createList(_tutors),
-                    SizedBox(height: 7),
+                    const Icon(Icons.person_sharp, size: 16),
+                    const SizedBox(width: 5),
+                    Expanded( // Добавляем Expanded для ограничения ширины
+                      child: _createList(_tutors, context),
+                    ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 7),
+              ],
 
               // группы
-              Visibility(
-                visible: _studentGroups != null && _studentGroups.isNotEmpty ? true : false ,
-                child: Row(
+              if (_studentGroups != null && _studentGroups!.isNotEmpty) ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.group_sharp),
-                    SizedBox(width: 5),
-                    _createList(_studentGroups),
-                    SizedBox(height: 7),
+                    const Icon(Icons.group_sharp, size: 16),
+                    const SizedBox(width: 5),
+                    Expanded( // Добавляем Expanded для ограничения ширины
+                      child: _createList(_studentGroups, context),
+                    ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 7),
+              ],
 
               // кабинет и место
-              Visibility(
-                visible: _location == null ? false : true,
-                child: Row(
+              if (_location != null) ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.location_on_sharp),
-                    SizedBox(width: 5),
-                    Row(
-                      children: [
-                        Text(_cabinet ?? "", style: TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis)),
-                        SizedBox(width: 5),
-                        Text(_location == null ? "" : "($_location)", style: TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis))
-                      ]
-                    )
+                    const Icon(Icons.location_on_sharp, size: 16),
+                    const SizedBox(width: 5),
+                    Expanded( // Добавляем Expanded для ограничения ширины
+                      child: Row(
+                        children: [
+                          Text(_cabinet ?? "", style: const TextStyle(fontSize: 12)),
+                          if (_location != null) ...[
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                "($_location)",
+                                style: const TextStyle(fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ]
+                        ],
+                      ),
+                    ),
                   ],
-                ) 
-              ),
+                ),
+              ],
             ],
           ),
         ),
