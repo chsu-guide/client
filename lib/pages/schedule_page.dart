@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart';
+
 import 'package:chsu_schedule_app/network/chsu_service.dart';
 import 'package:chsu_schedule_app/network/api_utils.dart';
 import 'package:chsu_schedule_app/network/api/generated/chsu_openapi.swagger.dart';
@@ -49,53 +53,32 @@ class _SchedulePageState extends State<SchedulePage> {
     "201 (Советский, 8)"
   ];
   final List<ScheduleCard> _scheduleItems = [
+      /* ScheduleCard(
+        timeSlot: "08:30 — 10:00",
+        subjectName: "(пример для студ) Java-программирование",
+        tutors: {"Пышницкий Константин Михайлович"},
+        lessonType: "лекция",
+        location: "Советский, 8",
+        cabinet: "205",
+        studentGroups: {"1ПИб-02-1оп-22", "1ПИб-02-2оп-22", "1ПИб-02-3оп-22"},
+      ), */
       ScheduleCard(
-        timeStart: "08:30",
-        timeEnd: "10:00",
-        subjectName: "Java-программирование",
-        tutorName: "Пышницкий Константин Михайлович",
-        type: "лекция",
-        location: "205 (Советский, 8)",
+        timeSlot: "08:30 — 10:00",
+        subjectName: "(пример для препод) Мобильное программирование",
+        //tutors: {"Селяничев Олег Леонидович"},
+        lessonType: "лабораторная работа",
+        location: "Советский, 8",
+        cabinet: "205",
+        studentGroups: {"1ПИб-02-3оп-22"},
       ),
       ScheduleCard(
-        timeStart: "08:30",
-        timeEnd: "10:00",
-        subjectName: "Java-программирование",
-        tutorName: "Пышницкий Константин Михайлович",
-        type: "лекция",
-        location: "205 (Советский, 8)",
-      ),
-      ScheduleCard(
-        timeStart: "08:30",
-        timeEnd: "10:00",
-        subjectName: "Java-программирование",
-        tutorName: "Пышницкий Константин Михайлович",
-        type: "лекция",
-        location: "205 (Советский, 8)",
-      ),
-      ScheduleCard(
-        timeStart: "08:30",
-        timeEnd: "10:00",
-        subjectName: "Java-программирование",
-        tutorName: "Пышницкий Константин Михайлович",
-        type: "лекция",
-        location: "205 (Советский, 8)",
-      ),
-      ScheduleCard(
-        timeStart: "08:30",
-        timeEnd: "10:00",
-        subjectName: "Java-программирование",
-        tutorName: "Пышницкий Константин Михайлович",
-        type: "лекция",
-        location: "205 (Советский, 8)",
-      ),
-      ScheduleCard(
-        timeStart: "08:30",
-        timeEnd: "10:00",
-        subjectName: "Java-программирование",
-        tutorName: "Пышницкий Константин Михайлович",
-        type: "лекция",
-        location: "205 (Советский, 8)",
+        timeSlot: "08:30 — 10:00",
+        subjectName: "(пример для ауд) Мобильное программирование",
+        tutors: {"Селяничев Олег Леонидович"},
+        lessonType: "лабораторная работа",
+        //location: "Советский, 8",
+        //cabinet: "205",
+        studentGroups: {"1ПИб-02-3оп-22"},
       )
     ];
 
@@ -202,6 +185,21 @@ class _SchedulePageState extends State<SchedulePage> {
                   style: FilledButton.styleFrom(alignment: Alignment.center),
                   onPressed: (_isSearchFieldValid && _isDateSelected) ? () async {
                     try {
+                      var token_attempt = await ChsuService.authenticate();
+                      var token = unwrapResponse<DataModelString>(token_attempt);
+                      debugPrint(token.data);
+
+                      var client = HttpClient();
+                      var req = await client.get("api.chsu.ru", 80, "/api/auditorium/v1");
+                      req.headers.add("Authorization", "Bearer ${token.data}");
+                      var unwrapped = await req.close();
+                      var stringData = await unwrapped.transform(utf8.decoder).join();
+
+                      debugPrint(stringData);
+
+                      /*
+                      ChsuService.setChopperClientToken()
+
                       final response = await ChsuService.service.apiAuditoriumV1Get();
                       final List<AuditoriumModel> list = unwrapResponse<List<AuditoriumModel>>(response);
                       setState(() {
@@ -213,6 +211,7 @@ class _SchedulePageState extends State<SchedulePage> {
                         _auditoriums = a;
                         debugPrint(a.toString());
                       });
+                      */
                     } catch (e) {
                       debugPrint('Ошибка загрузки аудиторий: $e');
                     }

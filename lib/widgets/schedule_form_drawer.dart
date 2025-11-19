@@ -19,11 +19,11 @@ class _AnimatedFormContainerState extends State<AnimatedFormContainer> {
   @override
   Widget build(BuildContext context) {
     return ExpansionTile(
-      initiallyExpanded: true,
+      initiallyExpanded: false,
+      //expansionAnimationStyle: AnimationStyle(...),
       onExpansionChanged: (val) => setState(() => _isFormExpanded = val),
       title: _isFormExpanded ? const Text(" ") : const Text("Сюда вписать выбранный диапазон дат"),
       subtitle: _isFormExpanded ? const Text(" ") : const Text("Сюда вписать остальное"),
-      //subtitle: Text(_isFormExpanded.toString()),
       backgroundColor: widget.backgroundColor,
       trailing: Icon(_isFormExpanded ? Icons.arrow_drop_up : Icons.arrow_drop_down),
       children: [

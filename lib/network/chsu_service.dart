@@ -3,16 +3,35 @@
 //import 'package:intl/intl.dart' show DateFormat;
 //import '../network/models/time_slot.dart';
 //import '../network/models/day.dart';
+import 'package:http/http.dart';
+
 import 'api/generated/chsu_openapi.swagger.dart';
 import 'package:chopper/chopper.dart' as chopper;
 
 class ChsuService {
-  static final String _apiUsername = "user";
-  static final String _apiPassword = "password";
+  static final String _apiUsername = "mobil";
+  static final String _apiPassword = "ds3m#2nn";
   static final String _apiUrl = 'api.chsu.ru';
-  static final ChsuOpenapi service = ChsuOpenapi.create(
-    baseUrl: Uri.http(_apiUrl, "/api"),
-  );
+  static String? token = null;
+  static ChsuOpenapi service = ChsuOpenapi.create(baseUrl: Uri.http(_apiUrl, "/"));
+
+  /* static void setChopperClientToken(String token) {
+    final chopperClient = chopper.ChopperClient(
+      baseUrl: Uri.http(_apiUrl),
+      interceptors: [
+        chopper.HttpLoggingInterceptor(),
+      ],
+      // request.copyWith(headers: {'Authorization': "Bearer $token"})
+    );
+    service = ChsuOpenapi.create(client: chopper.ChopperClient(
+      baseUrl: Uri.http(_apiUrl)));
+  } */
+
+  static Future<chopper.Response<DataModelString>> authenticate() async {
+    return service.apiAuthSigninPost(
+      body: AuthenticationRequest(username: _apiUsername, password:  _apiPassword)
+    );
+  }
 
   /* void decodeJson(List<dynamic> data)
   {

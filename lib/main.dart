@@ -65,7 +65,7 @@ class _NavigationPageState extends State<NavigationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(child: _navPages[_currentPageIndex]),
-
+      resizeToAvoidBottomInset: false,
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Theme.of(context).colorScheme.onPrimary,
         currentIndex: _currentPageIndex,
