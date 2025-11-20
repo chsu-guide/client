@@ -42,7 +42,8 @@ class ScheduleCard extends StatelessWidget {
       return StatefulBuilder(
         builder: (context, setState) {
           bool isExpanded = false;
-          return Container(
+          
+          return SizedBox(
             width: double.infinity, // Ограничиваем ширину
             child: ExpansionTile(
               title: Text(
@@ -107,7 +108,7 @@ class ScheduleCard extends StatelessWidget {
               const SizedBox(height: 7),
 
               // преподаватели
-              if (_tutors != null && _tutors!.isNotEmpty) ...[
+              if (_tutors != null && _tutors.isNotEmpty) ...[
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -122,7 +123,7 @@ class ScheduleCard extends StatelessWidget {
               ],
 
               // группы
-              if (_studentGroups != null && _studentGroups!.isNotEmpty) ...[
+              if (_studentGroups != null && _studentGroups.isNotEmpty) ...[
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

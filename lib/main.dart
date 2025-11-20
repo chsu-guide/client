@@ -1,5 +1,3 @@
-import 'package:chsu_schedule_app/network/chsu_service.dart';
-
 import '../pages/schedule_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -44,8 +42,8 @@ class _NavigationPageState extends State<NavigationPage> {
       icon: Icon(Icons.calendar_today_outlined),
     ),
     BottomNavigationBarItem(
-      label: "Карта",
-      icon: Icon(Icons.location_on_outlined),
+      label: "Настройки",
+      icon: Icon(Icons.settings_outlined),
     ),
   ];
   final List<Widget> _navPages = const [
@@ -66,13 +64,13 @@ class _NavigationPageState extends State<NavigationPage> {
     return Scaffold(
       body: SafeArea(child: _navPages[_currentPageIndex]),
       resizeToAvoidBottomInset: false,
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Theme.of(context).colorScheme.onPrimary,
-        currentIndex: _currentPageIndex,
-        type: BottomNavigationBarType.fixed,
-        items: _navBarItems,
-        onTap: _bottomBarNavigation,
-      ),
+      // bottomNavigationBar: BottomNavigationBar(
+      //   backgroundColor: Theme.of(context).colorScheme.onPrimary,
+      //   currentIndex: _currentPageIndex,
+      //   type: BottomNavigationBarType.fixed,
+      //   items: _navBarItems,
+      //   onTap: _bottomBarNavigation,
+      // ),
     );
   }
 }
