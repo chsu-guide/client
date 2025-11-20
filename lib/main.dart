@@ -20,7 +20,7 @@ class ChsuApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Расписание ЧГУ',
+      title: 'Chedule — Расписание ЧГУ',
       theme: appTheme,
       home: const NavigationPage(),
       localizationsDelegates: [GlobalMaterialLocalizations.delegate],
