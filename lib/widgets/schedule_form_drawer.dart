@@ -45,7 +45,9 @@ class _AnimatedFormContainerState extends State<AnimatedFormContainer> {
         setState(() => _isFormExpanded = val);
         widget.onExpansionChanged?.call(val);
       },
-      
+      //Чтобы виджеты не пересоздавались ( Но это не точно:) )
+      maintainState: true,
+
       title: _isFormExpanded ? const Text("Задайте параметры запроса.") : Text("Нажимите для раскрытия формы."),
       subtitle: const Text(""),
       

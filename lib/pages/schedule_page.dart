@@ -21,7 +21,7 @@ class SchedulePage extends StatefulWidget {
 class _SchedulePageState extends State<SchedulePage> {
   final ChsuService _chsuService = ChsuService();
   final ScrollController _scrollController = ScrollController();
-
+  
   ScheduleTarget _selectedTarget = ScheduleTarget.student;
 
   DateTime? _selectedDay;
@@ -107,6 +107,18 @@ Future<void> _loadTutors() async {
   });
 }
 
+bool _isValidInput(){
+if (_searchValue.isEmpty) return false;
+    
+    switch (_selectedTarget) {
+      case ScheduleTarget.student:
+        return _groups.contains(_searchValue);
+      case ScheduleTarget.tutor:
+        return _tutors.contains(_searchValue);
+      case ScheduleTarget.auditorium:
+        return _auditoriums.contains(_searchValue);
+    }
+}
 Future<void> _loadSchedule() async {
   String startDate = _formatDate(_rangeStart ?? _selectedDay ?? DateTime.now());
   String endDate = _formatDate(_rangeEnd ?? _selectedDay ?? DateTime.now());
@@ -142,6 +154,15 @@ String _formatDate(DateTime date) {
           isExpanded: _isFormExpanded,
           onExpansionChanged: (isFormExpanded) {
             setState(() => _isFormExpanded = isFormExpanded);
+            _updateSearchValue(_searchValue);
+            if (_isValidInput()){
+                      // Сбрасываем валидность при смене цели
+                      _updateSearchFieldValidation(true);
+                    }
+                    else {
+                      // Сбрасываем валидность при смене цели
+                      _updateSearchFieldValidation(false);
+                    }
           },
 
           formWidget: Padding(
@@ -156,10 +177,15 @@ String _formatDate(DateTime date) {
                   selectedTarget: _selectedTarget,
                   onSelectionChanged: (newTarget) {
                     setState(() => _selectedTarget = newTarget);
-                    // Сбрасываем валидность при смене цели
-                    _updateSearchFieldValidation(false);
-                    // Сбрасываем значение поиска
-                    _updateSearchValue('');
+                    if (_isValidInput()){
+                      // Сбрасываем валидность при смене цели
+                      _updateSearchFieldValidation(true);
+                    }
+                    else {
+                      // Сбрасываем валидность при смене цели
+                      _updateSearchFieldValidation(false);
+                      // Сбрасываем значение поиска
+                    }
                   }
                 ),
                 
