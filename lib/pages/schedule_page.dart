@@ -37,6 +37,7 @@ class _SchedulePageState extends State<SchedulePage> {
   bool _isSearchFieldValid = false;
   bool _isDateSelected = false;
   bool _isLoading = false;
+  bool _isSheduleLoading = false;
   bool _isFormExpanded = true;
 
   // Добавляем переменную для хранения значения поиска
@@ -142,10 +143,6 @@ Future<void> _loadSchedule() async {
 
   setState(() {
       _scheduleItems = groupedByDate;
-      // Закрываем форму, если получены карточки
-      if (scheduleItems.isNotEmpty) {
-        _isFormExpanded = false;
-      }
     });
 }
 
@@ -261,15 +258,18 @@ String _formatDate(DateTime date) {
                 ),
 
                 //SizedBox(height: 10),
-
                 FilledButton(
                   style: FilledButton.styleFrom(alignment: Alignment.center),
-                  onPressed: (_isSearchFieldValid && _isDateSelected) ? () async {
+                  onPressed: (_isSearchFieldValid && _isDateSelected && !_isSheduleLoading) ? () async {
+                    _isSheduleLoading = true;
                     try {
-                      await _loadSchedule();
                       _formController.collapse();
+                      await _loadSchedule();
                     } catch (e) {
                       debugPrint('Ошибка загрузки расписания: $e');
+                    }
+                    finally{
+                      _isSheduleLoading = false;
                     }
                   } : null,
                   child: const Text('Показать')
@@ -279,9 +279,20 @@ String _formatDate(DateTime date) {
           ),
         ),
 
-        // выдача расписания
+        // Индикатор загрузки расписания
         Visibility(
-          visible: _scheduleItems.isEmpty,
+          visible: _isSheduleLoading,
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 50),
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        ),
+
+        //расписание не найдено
+        Visibility(
+          visible: _scheduleItems.isEmpty && !_isSheduleLoading,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -296,9 +307,10 @@ String _formatDate(DateTime date) {
             ],
           )
         ),
-        
+
+        //Выдача расписания
         Visibility(
-          visible: _scheduleItems.isNotEmpty,
+          visible: _scheduleItems.isNotEmpty && !_isSheduleLoading,
           child: Expanded(
             child: ListView(
               controller: _scrollController,
