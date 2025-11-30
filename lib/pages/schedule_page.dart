@@ -46,7 +46,7 @@ class _SchedulePageState extends State<SchedulePage> {
   List<String> _tutors = [];
   List<String> _auditoriums = [];
 
-  List<ScheduleCard> _scheduleItems = [];
+  Map<DateTime, List<ScheduleCard>> _scheduleItems = {};
 
   @override
   void initState() {
@@ -125,9 +125,23 @@ Future<void> _loadSchedule() async {
   
   // Используем _searchValue вместо жестко заданной группы
   List<ScheduleCard> scheduleItems = await _chsuService.getSchedule(startDate, endDate, _selectedTarget, _searchValue);
-  
+  Map<DateTime, List<ScheduleCard>> groupedByDate = {};
+
+  for (var card in scheduleItems) {
+    // Используем дату из карточки для группировки
+    // Предполагается, что в ScheduleCard есть метод или поле для получения даты
+    DateTime cardDate = card.date;
+
+    DateTime dateOnly = DateTime(cardDate.year, cardDate.month, cardDate.day);
+    
+    if (!groupedByDate.containsKey(dateOnly)) {
+      groupedByDate[dateOnly] = [];
+    }
+    groupedByDate[dateOnly]!.add(card);
+  }
+
   setState(() {
-      _scheduleItems = scheduleItems;
+      _scheduleItems = groupedByDate;
       // Закрываем форму, если получены карточки
       if (scheduleItems.isNotEmpty) {
         _isFormExpanded = false;
@@ -287,12 +301,14 @@ String _formatDate(DateTime date) {
             child: ListView(
               controller: _scrollController,
               padding: const EdgeInsets.all(16.0),
-              children: <Widget>[
-                ScheduleQueryView(
-                      title: _rangeStart == null ? "" : _dateFormat.format(_rangeStart!.toUtc()),
-                      cards: _scheduleItems,
-                    )
-              ],
+              children: _scheduleItems.entries.map((entry) {
+                DateTime date = entry.key;
+                List<ScheduleCard> cards = entry.value;
+                return ScheduleQueryView(
+                  title: _dateFormat.format(date),
+                  cards: cards,
+                );
+              }).toList(),
             ),
           )
         ),

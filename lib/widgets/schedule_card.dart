@@ -9,6 +9,7 @@ class ScheduleCard extends StatelessWidget {
   final Set<String>? _studentGroups;
   final String? _cabinet;
   final String? _location;
+  final DateTime? _date;
 
   const ScheduleCard({
     super.key,
@@ -19,7 +20,8 @@ class ScheduleCard extends StatelessWidget {
     String? location,
     String? pg,
     Set<String>? tutors,
-    Set<String>? studentGroups
+    Set<String>? studentGroups,
+    required DateTime date
   }) : _timeSlot = timeSlot,
        _pg = pg,
        _subjectName = subjectName,
@@ -27,7 +29,10 @@ class ScheduleCard extends StatelessWidget {
        _studentGroups = studentGroups,
        _lessonType = lessonType,
        _location = location,
-       _cabinet = cabinet;
+       _cabinet = cabinet,
+       _date = date;
+
+  get date => _date;
 
   Widget _createList(Set<String>? list, BuildContext context) {
     if (list == null || list.isEmpty) {

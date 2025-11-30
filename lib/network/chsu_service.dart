@@ -2,6 +2,7 @@ import 'dart:convert' show utf8, json, jsonDecode;
 import 'dart:io';
 import 'package:chsu_schedule_app/classes/schedule_target.dart' show ScheduleTarget;
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 import '../widgets/schedule_card.dart';
 
 class ChsuService {
@@ -211,6 +212,9 @@ class ChsuService {
       String timeSlot = '${item['startTime']} - ${item['endTime']}';
       String subjectName = item['discipline']['title'];
       String lessonType = item['lessontype'];
+      
+      DateTime date = DateFormat('dd.MM.yyyy').parse(item['dateEvent'] as String);
+      
       Set<String> tutors = {};
       if (item['lecturers'] != null) {
         for (var lecturer in item['lecturers']) {
@@ -234,10 +238,10 @@ class ChsuService {
         studentGroups: studentGroups.isNotEmpty ? studentGroups : null,
         cabinet: cabinet,
         location: location,
+        date: date,
       );
     }).toList();
 
-      
       return schedule;
     } catch (e) {
       debugPrint('Error: $e');
