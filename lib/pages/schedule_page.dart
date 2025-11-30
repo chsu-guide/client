@@ -21,7 +21,7 @@ class SchedulePage extends StatefulWidget {
 class _SchedulePageState extends State<SchedulePage> {
   final ChsuService _chsuService = ChsuService();
   final ScrollController _scrollController = ScrollController();
-  
+  final ExpansibleController _formController = ExpansibleController();
   ScheduleTarget _selectedTarget = ScheduleTarget.student;
 
   DateTime? _selectedDay;
@@ -166,6 +166,7 @@ String _formatDate(DateTime date) {
           backgroundColor: Theme.of(context).colorScheme.onPrimary,
 
           isExpanded: _isFormExpanded,
+          controller: _formController,
           onExpansionChanged: (isFormExpanded) {
             setState(() => _isFormExpanded = isFormExpanded);
             _updateSearchValue(_searchValue);
@@ -266,6 +267,7 @@ String _formatDate(DateTime date) {
                   onPressed: (_isSearchFieldValid && _isDateSelected) ? () async {
                     try {
                       await _loadSchedule();
+                      _formController.collapse();
                     } catch (e) {
                       debugPrint('Ошибка загрузки расписания: $e');
                     }
