@@ -1,4 +1,5 @@
-import 'package:chsu_schedule_app/network/chsu_service.dart';
+import 'package:chsu_schedule_app/api/client.dart';
+import 'package:chsu_schedule_app/api/schedule.dart';
 
 import '../classes/schedule_target.dart';
 import '../widgets/schedule_card.dart';
@@ -19,7 +20,7 @@ class SchedulePage extends StatefulWidget {
 }
 
 class _SchedulePageState extends State<SchedulePage> {
-  final ChsuService _chsuService = ChsuService();
+  final ChsuApiService _chsuApiService = ChsuApiService(null);
   final ScrollController _scrollController = ScrollController();
   final ExpansibleController _formController = ExpansibleController();
   ScheduleTarget _selectedTarget = ScheduleTarget.student;
@@ -57,14 +58,13 @@ class _SchedulePageState extends State<SchedulePage> {
 
   Future<void> _initializeData() async {
     setState(() => _isLoading = true);
-    
-    await _chsuService.authenticate();
+
     await _loadGroups();
     await _loadTutors();
     await _loadAuditoriums();
-    
+
     setState(() => _isLoading = false);
-}
+  }
 
   // Метод для обновления состояния валидности поля поиска
   void _updateSearchFieldValidation(bool isValid) {
@@ -83,34 +83,46 @@ class _SchedulePageState extends State<SchedulePage> {
   void _checkDateSelected() {
     setState(() {
       // Проверяем, выбрана ли одиночная дата ИЛИ выбран диапазон дат
-      _isDateSelected = (_selectedDay != null) || (_rangeStart != null && _rangeEnd != null);
+      _isDateSelected =
+          (_selectedDay != null) || (_rangeStart != null && _rangeEnd != null);
     });
   }
 
   Future<void> _loadGroups() async {
-      List<String> groups = await _chsuService.getGroups();
-      setState(() {
-        _groups = groups;
-      });
-    }
+    List<Group> prelimGroups = await _chsuApiService.getGroupList();
+    debugPrint('First group is ${prelimGroups[0].name}');
+    List<String> groups = (await _chsuApiService.getGroupList())
+        .map((group) => group.name ?? "")
+        .toList();
+    debugPrint('Group list is ${groups.length} items long');
+    setState(() {
+      _groups = groups;
+    });
+  }
 
   Future<void> _loadAuditoriums() async {
-  List<String> auditoriums = await _chsuService.getAuditoriums();
-  setState(() {
-    _auditoriums = auditoriums;
-  });
-}
+    List<String> auditoriums = (await _chsuApiService.getAuditoriumList())
+        .map((auditorium) => auditorium.name!)
+        .whereType<String>()
+        .toList();
+    setState(() {
+      _auditoriums = auditoriums;
+    });
+  }
 
-Future<void> _loadTutors() async {
-  List<String> tutors = await _chsuService.getTutors();
-  setState(() {
-    _tutors = tutors;
-  });
-}
+  Future<void> _loadTutors() async {
+    List<String> tutors = (await _chsuApiService.getTeacherList())
+        .map((tutor) => tutor.fullName)
+        .whereType<String>()
+        .toList();
+    setState(() {
+      _tutors = tutors;
+    });
+  }
 
-bool _isValidInput(){
-if (_searchValue.isEmpty) return false;
-    
+  bool _isValidInput() {
+    if (_searchValue.isEmpty) return false;
+
     switch (_selectedTarget) {
       case ScheduleTarget.student:
         return _groups.contains(_searchValue);
@@ -119,36 +131,57 @@ if (_searchValue.isEmpty) return false;
       case ScheduleTarget.auditorium:
         return _auditoriums.contains(_searchValue);
     }
-}
-Future<void> _loadSchedule() async {
-  String startDate = _formatDate(_rangeStart ?? _selectedDay ?? DateTime.now());
-  String endDate = _formatDate(_rangeEnd ?? _selectedDay ?? DateTime.now());
-  
-  // Используем _searchValue вместо жестко заданной группы
-  List<ScheduleCard> scheduleItems = await _chsuService.getSchedule(startDate, endDate, _selectedTarget, _searchValue);
-  Map<DateTime, List<ScheduleCard>> groupedByDate = {};
-
-  for (var card in scheduleItems) {
-    // Используем дату из карточки для группировки
-    // Предполагается, что в ScheduleCard есть метод или поле для получения даты
-    DateTime cardDate = card.date;
-
-    DateTime dateOnly = DateTime(cardDate.year, cardDate.month, cardDate.day);
-    
-    if (!groupedByDate.containsKey(dateOnly)) {
-      groupedByDate[dateOnly] = [];
-    }
-    groupedByDate[dateOnly]!.add(card);
   }
 
-  setState(() {
+  Future<void> _loadSchedule() async {
+    DateTime startDate = _rangeStart ?? _selectedDay ?? DateTime.now();
+    DateTime endDate = _rangeEnd ?? _selectedDay ?? DateTime.now();
+    // Костыль - Запрос в бэке учитывает в том числе и время
+    endDate = endDate.add(const Duration(hours: 23, minutes: 59));
+
+    // Используем _searchValue вместо жестко заданной группы
+    List<ScheduleItem> items = await switch (_selectedTarget) {
+      ScheduleTarget.auditorium => _chsuApiService.getAuditoriumScheduleByName(
+        _searchValue,
+        startDate,
+        endDate,
+      ),
+      ScheduleTarget.student => _chsuApiService.getStudentScheduleByName(
+        _searchValue,
+        startDate,
+        endDate,
+      ),
+      ScheduleTarget.tutor => _chsuApiService.getTeacherScheduleByName(
+        _searchValue,
+        startDate,
+        endDate,
+      ),
+    };
+    debugPrint('Found ${items.length} schedule items');
+
+    List<ScheduleCard> scheduleItems = items
+        .map((item) => item.toCard())
+        .toList();
+    debugPrint('Got ${scheduleItems.length} schedule cards');
+    Map<DateTime, List<ScheduleCard>> groupedByDate = {};
+
+    for (var card in scheduleItems) {
+      // Используем дату из карточки для группировки
+      // Предполагается, что в ScheduleCard есть метод или поле для получения даты
+      DateTime cardDate = card.date;
+
+      DateTime dateOnly = DateTime(cardDate.year, cardDate.month, cardDate.day);
+
+      if (!groupedByDate.containsKey(dateOnly)) {
+        groupedByDate[dateOnly] = [];
+      }
+      groupedByDate[dateOnly]!.add(card);
+    }
+
+    setState(() {
       _scheduleItems = groupedByDate;
     });
-}
-
-String _formatDate(DateTime date) {
-  return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -167,14 +200,13 @@ String _formatDate(DateTime date) {
           onExpansionChanged: (isFormExpanded) {
             setState(() => _isFormExpanded = isFormExpanded);
             _updateSearchValue(_searchValue);
-            if (_isValidInput()){
-                      // Сбрасываем валидность при смене цели
-                      _updateSearchFieldValidation(true);
-                    }
-                    else {
-                      // Сбрасываем валидность при смене цели
-                      _updateSearchFieldValidation(false);
-                    }
+            if (_isValidInput()) {
+              // Сбрасываем валидность при смене цели
+              _updateSearchFieldValidation(true);
+            } else {
+              // Сбрасываем валидность при смене цели
+              _updateSearchFieldValidation(false);
+            }
           },
 
           formWidget: Padding(
@@ -183,35 +215,35 @@ String _formatDate(DateTime date) {
               spacing: 8,
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              
+
               children: <Widget>[
                 ScheduleTargetSelector(
                   selectedTarget: _selectedTarget,
                   onSelectionChanged: (newTarget) {
                     setState(() => _selectedTarget = newTarget);
-                    if (_isValidInput()){
+                    if (_isValidInput()) {
                       // Сбрасываем валидность при смене цели
                       _updateSearchFieldValidation(true);
-                    }
-                    else {
+                    } else {
                       // Сбрасываем валидность при смене цели
                       _updateSearchFieldValidation(false);
                       // Сбрасываем значение поиска
                     }
-                  }
+                  },
                 ),
-                
+
                 SizedBox(height: 8),
-                
+
                 ScheduleSearchField(
                   selectedTarget: _selectedTarget,
                   groups: _groups,
                   tutors: _tutors,
                   auditoriums: _auditoriums,
                   onValidationChanged: _updateSearchFieldValidation,
-                  onValueChanged: _updateSearchValue, // Передаем callback для значения
+                  onValueChanged:
+                      _updateSearchValue, // Передаем callback для значения
                 ),
-                
+
                 ScheduleDatePicker(
                   focusedDay: _focusedDay,
                   selectedDay: _selectedDay,
@@ -219,7 +251,7 @@ String _formatDate(DateTime date) {
                   rangeEnd: _rangeEnd,
                   rangeSelectionMode: _rangeSelectionMode,
                   calendarFormat: _calendarFormat,
-                  
+
                   onDaySelected: (selectedDay, focusedDay) {
                     if (!isSameDay(_selectedDay, selectedDay)) {
                       setState(() {
@@ -243,7 +275,7 @@ String _formatDate(DateTime date) {
                     });
                     _checkDateSelected(); // Вызываем проверку даты
                   },
-                  
+
                   onFormatChanged: (format) {
                     if (_calendarFormat != format) {
                       setState(() {
@@ -251,7 +283,7 @@ String _formatDate(DateTime date) {
                       });
                     }
                   },
-                  
+
                   onPageChanged: (focusedDay) {
                     _focusedDay = focusedDay;
                   },
@@ -260,20 +292,25 @@ String _formatDate(DateTime date) {
                 //SizedBox(height: 10),
                 FilledButton(
                   style: FilledButton.styleFrom(alignment: Alignment.center),
-                  onPressed: (_isSearchFieldValid && _isDateSelected && !_isSheduleLoading) ? () async {
-                    _isSheduleLoading = true;
-                    try {
-                      _formController.collapse();
-                      await _loadSchedule();
-                    } catch (e) {
-                      debugPrint('Ошибка загрузки расписания: $e');
-                    }
-                    finally{
-                      _isSheduleLoading = false;
-                    }
-                  } : null,
-                  child: const Text('Показать')
-                )
+                  onPressed:
+                      (_isSearchFieldValid &&
+                          _isDateSelected &&
+                          !_isSheduleLoading)
+                      ? () async {
+                          _isSheduleLoading = true;
+                          try {
+                            _formController.collapse();
+                            await _loadSchedule();
+                          } catch (e) {
+                            debugPrint('Ошибка загрузки расписания: $e');
+                            debugPrintStack();
+                          } finally {
+                            _isSheduleLoading = false;
+                          }
+                        }
+                      : null,
+                  child: const Text('Показать'),
+                ),
               ],
             ),
           ),
@@ -284,9 +321,7 @@ String _formatDate(DateTime date) {
           visible: _isSheduleLoading,
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 50),
-            child: Center(
-              child: CircularProgressIndicator(),
-            ),
+            child: Center(child: CircularProgressIndicator()),
           ),
         ),
 
@@ -299,13 +334,13 @@ String _formatDate(DateTime date) {
               SizedBox(height: 50),
               Expanded(
                 child: Text(
-                  'По заданным параметрам не найдено расписание. Задайте другие параметры запроса.', 
-                  overflow: TextOverflow.clip
-                )
+                  'По заданным параметрам не найдено расписание. Задайте другие параметры запроса.',
+                  overflow: TextOverflow.clip,
+                ),
               ),
-              SizedBox(height: 50)
+              SizedBox(height: 50),
             ],
-          )
+          ),
         ),
 
         //Выдача расписания
@@ -324,7 +359,7 @@ String _formatDate(DateTime date) {
                 );
               }).toList(),
             ),
-          )
+          ),
         ),
       ],
     );
