@@ -38,7 +38,7 @@ class _SchedulePageState extends State<SchedulePage> {
   bool _isSearchFieldValid = false;
   bool _isDateSelected = false;
   bool _isLoading = false;
-  bool _isSheduleLoading = false;
+  bool _isScheduleLoading = false;
   bool _isFormExpanded = true;
 
   // Добавляем переменную для хранения значения поиска
@@ -200,13 +200,7 @@ class _SchedulePageState extends State<SchedulePage> {
           onExpansionChanged: (isFormExpanded) {
             setState(() => _isFormExpanded = isFormExpanded);
             _updateSearchValue(_searchValue);
-            if (_isValidInput()) {
-              // Сбрасываем валидность при смене цели
-              _updateSearchFieldValidation(true);
-            } else {
-              // Сбрасываем валидность при смене цели
-              _updateSearchFieldValidation(false);
-            }
+            _updateSearchFieldValidation(_isValidInput());
           },
 
           formWidget: Padding(
@@ -221,14 +215,7 @@ class _SchedulePageState extends State<SchedulePage> {
                   selectedTarget: _selectedTarget,
                   onSelectionChanged: (newTarget) {
                     setState(() => _selectedTarget = newTarget);
-                    if (_isValidInput()) {
-                      // Сбрасываем валидность при смене цели
-                      _updateSearchFieldValidation(true);
-                    } else {
-                      // Сбрасываем валидность при смене цели
-                      _updateSearchFieldValidation(false);
-                      // Сбрасываем значение поиска
-                    }
+                    _updateSearchFieldValidation(_isValidInput());
                   },
                 ),
 
@@ -295,9 +282,9 @@ class _SchedulePageState extends State<SchedulePage> {
                   onPressed:
                       (_isSearchFieldValid &&
                           _isDateSelected &&
-                          !_isSheduleLoading)
+                          !_isScheduleLoading)
                       ? () async {
-                          _isSheduleLoading = true;
+                          _isScheduleLoading = true;
                           try {
                             _formController.collapse();
                             await _loadSchedule();
@@ -305,7 +292,7 @@ class _SchedulePageState extends State<SchedulePage> {
                             debugPrint('Ошибка загрузки расписания: $e');
                             debugPrintStack();
                           } finally {
-                            _isSheduleLoading = false;
+                            _isScheduleLoading = false;
                           }
                         }
                       : null,
@@ -318,7 +305,7 @@ class _SchedulePageState extends State<SchedulePage> {
 
         // Индикатор загрузки расписания
         Visibility(
-          visible: _isSheduleLoading,
+          visible: _isScheduleLoading,
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 50),
             child: Center(child: CircularProgressIndicator()),
@@ -327,7 +314,7 @@ class _SchedulePageState extends State<SchedulePage> {
 
         //расписание не найдено
         Visibility(
-          visible: _scheduleItems.isEmpty && !_isSheduleLoading,
+          visible: _scheduleItems.isEmpty && !_isScheduleLoading,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -345,7 +332,7 @@ class _SchedulePageState extends State<SchedulePage> {
 
         //Выдача расписания
         Visibility(
-          visible: _scheduleItems.isNotEmpty && !_isSheduleLoading,
+          visible: _scheduleItems.isNotEmpty && !_isScheduleLoading,
           child: Expanded(
             child: ListView(
               controller: _scrollController,
