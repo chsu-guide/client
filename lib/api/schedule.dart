@@ -1,4 +1,5 @@
 import 'package:chsu_schedule_app/widgets/schedule_card.dart';
+import 'package:flutter/foundation.dart';
 
 class ScheduleItem {
   int? id;
@@ -71,8 +72,8 @@ class ScheduleItem {
       timeSlot: '${formatTime(this.startTime!)} - ${formatTime(this.endTime!)}',
       subjectName: this.disciplineName ?? "",
       lessonType: this.lessonType ?? "",
-      cabinet: "",
-      location: "",
+      cabinet: this.auditoriumName.first.name ?? "",
+      location: this.auditoriumName.first.buildingName ?? "",
       pg: null,
       tutors: this.teacherName
           .map(
@@ -116,13 +117,16 @@ class Auditorium {
   String? name;
   String? number;
   int? buildingId;
+  String? buildingName;
 
   Auditorium({this.name, this.number, this.buildingId});
 
   Auditorium.fromJson(Map<String, dynamic> json) {
+    debugPrint("$json");
     name = json['name'];
     number = json['number'];
     buildingId = json['building_id'];
+    buildingName = json['building_name'];
   }
 
   Map<String, dynamic> toJson() {
@@ -130,6 +134,7 @@ class Auditorium {
     data['name'] = name;
     data['number'] = number;
     data['building_id'] = buildingId;
+    data['building_name'] = buildingName;
     return data;
   }
 }
