@@ -1,4 +1,5 @@
 import 'package:chsu_schedule_app/api/client.dart';
+import 'package:chsu_schedule_app/api/metadata.dart' as meta;
 import 'package:chsu_schedule_app/api/schedule.dart';
 
 import '../classes/schedule_target.dart';
@@ -90,7 +91,6 @@ class _SchedulePageState extends State<SchedulePage> {
 
   Future<void> _loadGroups() async {
     List<Group> prelimGroups = await _chsuApiService.getGroupList();
-    debugPrint('First group is ${prelimGroups[0].name}');
     List<String> groups = (await _chsuApiService.getGroupList())
         .map((group) => group.name ?? "")
         .toList();
@@ -101,12 +101,16 @@ class _SchedulePageState extends State<SchedulePage> {
   }
 
   Future<void> _loadAuditoriums() async {
-    List<String> auditoriums = (await _chsuApiService.getAuditoriumList())
-        .map((auditorium) => auditorium.name!)
+    List<meta.BuildingList> auditoriums = await _chsuApiService
+        .getAuditoriumList();
+    List<String> auditoriumNames = auditoriums
+        .map((auditorium) => auditorium.auditoriums)
+        .expand((i) => i)
+        .map((aud) => aud.name)
         .whereType<String>()
         .toList();
     setState(() {
-      _auditoriums = auditoriums;
+      _auditoriums = auditoriumNames;
     });
   }
 
@@ -162,7 +166,6 @@ class _SchedulePageState extends State<SchedulePage> {
     List<ScheduleCard> scheduleItems = items
         .map((item) => item.toCard())
         .toList();
-    debugPrint('Got ${scheduleItems.length} schedule cards');
     Map<DateTime, List<ScheduleCard>> groupedByDate = {};
 
     for (var card in scheduleItems) {

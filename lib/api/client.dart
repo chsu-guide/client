@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:chsu_schedule_app/api/metadata.dart';
+import 'package:chsu_schedule_app/api/metadata.dart' as meta;
 import 'package:chsu_schedule_app/api/schedule.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -181,7 +181,7 @@ class ChsuApiService {
     DateTime end,
   ) async {
     final response = await _apiClient.get<List<dynamic>>(
-      '/schedule/teacher',
+      '/schedule/auditorium',
       queryParams: {
         "auditorium": auditoriumName,
         "start": start.millisecondsSinceEpoch ~/ 1000,
@@ -196,22 +196,22 @@ class ChsuApiService {
     return response.map((json) => Group.fromJson(json)).toList();
   }
 
-  Future<List<TeacherShort>> getTeacherList() async {
+  Future<List<meta.TeacherShort>> getTeacherList() async {
     final response = await _apiClient.get<List<dynamic>>('/metadata/teachers');
-    return response.map((json) => TeacherShort.fromJson(json)).toList();
+    return response.map((json) => meta.TeacherShort.fromJson(json)).toList();
   }
 
-  Future<List<AuditoriumShort>> getAuditoriumList() async {
+  Future<List<meta.BuildingList>> getAuditoriumList() async {
     final response = await _apiClient.get<List<dynamic>>(
       '/metadata/auditoriums',
     );
-    return response.map((json) => AuditoriumShort.fromJson(json)).toList();
+    return response.map((json) => meta.BuildingList.fromJson(json)).toList();
   }
 
-  Future<List<Discipline>> getDisciplineList() async {
+  Future<List<meta.Discipline>> getDisciplineList() async {
     final response = await _apiClient.get<List<dynamic>>(
       '/metadata/disciplines',
     );
-    return response.map((json) => Discipline.fromJson(json)).toList();
+    return response.map((json) => meta.Discipline.fromJson(json)).toList();
   }
 }

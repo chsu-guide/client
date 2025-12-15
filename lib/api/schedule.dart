@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:chsu_schedule_app/widgets/schedule_card.dart';
 import 'package:flutter/foundation.dart';
 
@@ -68,12 +70,13 @@ class ScheduleItem {
   }
 
   ScheduleCard toCard() {
+    debugPrint(jsonEncode(this.groupList));
     return ScheduleCard(
       timeSlot: '${formatTime(this.startTime!)} - ${formatTime(this.endTime!)}',
       subjectName: this.disciplineName ?? "",
       lessonType: this.lessonType ?? "",
-      cabinet: this.auditoriumName.first.name ?? "",
-      location: this.auditoriumName.first.buildingName ?? "",
+      cabinet: this.auditoriumName.firstOrNull?.name ?? "",
+      location: this.auditoriumName.firstOrNull?.buildingName ?? "",
       pg: null,
       tutors: this.teacherName
           .map(
